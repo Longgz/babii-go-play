@@ -1,0 +1,6 @@
+{ "rules": { "rooms": { "$code": {
+  "members": { ".read": "auth != null", "$uid": { ".write": "auth != null && auth.uid === $uid" } },
+  "host": { ".read": "auth != null", ".write": "auth != null && !data.exists()" },
+  "g": { ".read": "auth != null", ".write": "auth != null && root.child('rooms').child($code).child('members').child(auth.uid).exists()" },
+  "private": { ".write": "auth != null && root.child('rooms').child($code).child('members').child(auth.uid).exists()", "$uid": { ".read": "auth != null && auth.uid === $uid" } }
+} } } }

@@ -1,0 +1,6 @@
+.oaq{display:grid;grid-template-columns:1.3fr repeat(5,1fr) 1.3fr;grid-template-rows:1fr 1fr;gap:8px;padding:12px;border-radius:18px;margin:12px 0;background:linear-gradient(135deg,#f1e6cc,var(--giay) 40%,#dccfae);box-shadow:0 14px 40px #0008,inset 0 0 0 3px #b9a77f88}
+.pit{aspect-ratio:1;min-height:52px;border-radius:50%;border:0;font:inherit;font-weight:800;font-size:1.1rem;color:var(--ink);background:radial-gradient(circle at 40% 35%,#d9c9a3,#bba67a);box-shadow:inset 0 3px 8px #0004}
+.pit.quan{aspect-ratio:auto;border-radius:40px;grid-row:1/span 2;background:radial-gradient(circle at 40% 35%,#e3b9a0,#b5654a);color:#fff}
+.pit:not(:disabled){cursor:pointer;box-shadow:inset 0 3px 8px #0004,0 0 0 3px #f4b94299}
+.pit.sel{box-shadow:inset 0 3px 8px #0004,0 0 0 4px var(--lantern),0 0 14px var(--lantern)}
+.dirs{min-height:44px}

@@ -1,0 +1,16 @@
+.stage{position:relative;border-radius:18px;overflow:hidden;margin:12px 0}
+.view>svg{display:block;width:100%;height:auto}
+.mini{position:absolute;right:8px;bottom:8px;width:76px;background:#111b36cc;border-radius:12px;padding:4px}
+.mini svg{display:block;width:100%}
+.map{width:100%;max-height:70vh;display:block}
+.map .go{cursor:pointer}.map .go circle{stroke:#f4b942;stroke-width:1.2;animation:pulse 1.4s infinite}
+@keyframes pulse{50%{r:4.4}}
+.prev svg,.alb svg{display:block;width:100%;height:auto;border-radius:10px}
+.alb{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.alb figure{margin:0;display:grid;gap:6px}
+.pano{width:100%;height:min(60vh,420px);border-radius:14px;overflow:hidden;background:#0b1230}
+.panel label{display:grid;gap:4px}
+.panel select{background:#ffffff1a;color:var(--text);border:1px solid #ffffff2a;border-radius:10px;padding:10px;font:inherit}
+.panel select option{color:#111}
+.out{white-space:pre-wrap;word-break:break-all;background:#0004;border-radius:8px;padding:8px;font-size:.8rem;margin:0}.out:empty{display:none}
+.list li{display:flex;gap:8px;align-items:center;flex-wrap:wrap}

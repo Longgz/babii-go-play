@@ -1,0 +1,11 @@
+// Hình lá bài tự vẽ bằng SVG (khung 100x150)
+export const COL = { R: '#c23b32', Y: '#f4b942', B: '#26407a', G: '#2f8a6a' };
+const TXT = { R: '#c23b32', Y: '#b97d00', B: '#26407a', G: '#2f8a6a' }, NAME = { R: 'đỏ', Y: 'vàng', B: 'chàm', G: 'lục' };
+const LAB = { S: '⊘', V: '⇄', D: '+2', W: '★', F: '+4' };
+export function cardSVG(code, w = 64) {
+  const wild = code === 'W' || code === 'F', c = code[0], v = wild ? code : code[1], t = LAB[v] || v, size = t.length > 1 ? 34 : 52, ink = wild ? '#1b1b1f' : TXT[c];
+  const face = wild ? `<rect x="5" y="5" width="45" height="70" fill="${COL.R}"/><rect x="50" y="5" width="45" height="70" fill="${COL.Y}"/><rect x="5" y="75" width="45" height="70" fill="${COL.G}"/><rect x="50" y="75" width="45" height="70" fill="${COL.B}"/>` : `<rect x="5" y="5" width="90" height="140" rx="7" fill="${COL[c]}"/>`;
+  const corner = wild ? '' : `<text x="13" y="24" font-size="15" font-weight="800" fill="#fff" font-family="sans-serif">${t}</text><text x="87" y="140" text-anchor="end" font-size="15" font-weight="800" fill="#fff" font-family="sans-serif">${t}</text>`;
+  return `<svg class="card" width="${w}" height="${Math.round(w * 1.5)}" viewBox="0 0 100 150" role="img" aria-label="Lá ${wild ? (v === 'W' ? 'đổi màu' : 'đổi màu rút bốn') : NAME[c] + ' ' + v}"><rect width="100" height="150" rx="10" fill="#fff"/>${face}<ellipse cx="50" cy="75" rx="30" ry="48" transform="rotate(-25 50 75)" fill="#fff"/><text x="50" y="${75 + size * .36}" text-anchor="middle" font-size="${size}" font-weight="800" fill="${ink}" font-family="sans-serif">${t}</text>${corner}</svg>`;
+}
+export const backSVG = (w = 64) => `<svg class="card" width="${w}" height="${Math.round(w * 1.5)}" viewBox="0 0 100 150" role="img" aria-label="Chồng bài"><rect width="100" height="150" rx="10" fill="#fff"/><rect x="5" y="5" width="90" height="140" rx="7" fill="#1d2c58"/><rect x="11" y="11" width="78" height="128" rx="5" fill="none" stroke="#f4b942" stroke-width="2"/><path d="M50 40v10" stroke="#c9b27a" stroke-width="2"/><ellipse cx="50" cy="55" rx="14" ry="5" fill="#8f2a2a"/><path d="M37 55c-6 14-6 30 0 44h26c6-14 6-30 0-44z" fill="#e0483c"/><ellipse cx="50" cy="99" rx="14" ry="5" fill="#8f2a2a"/></svg>`;
