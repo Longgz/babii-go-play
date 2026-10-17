@@ -1,3 +1,24 @@
-{ "name": "Babii chơii đii", "short_name": "Babii chơii đii", "description": "Trò chơi dân gian cho 2-5 người",
-  "start_url": "./", "scope": "./", "display": "standalone", "background_color": "#111b36", "theme_color": "#111b36", "lang": "vi",
-  "icons": [ { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" }, { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" } ] }
+{
+    "name": "Babii chơii đii - Babii go play",
+    "short_name": "Babii go play",
+    "description": "Trò chơi vuii",
+    "start_url": "./",
+    "scope": "./",
+    "display": "standalone",
+    "background_color": "#111b36",
+    "theme_color": "#111b36",
+    "lang": "vi",
+    "icons": [
+        {
+            "src": "icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ]
+}
