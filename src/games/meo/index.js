@@ -11,7 +11,37 @@ export default {
   mount(el, ctx) {
     const { room, me } = ctx; let st = null, hand = [], ready = false, pick = null, peek = null, busy = false, won = false;
     el.innerHTML = `<section><div class="bar"><a class="bk" href="#/">Quay lại</a><div class="turn" role="status" aria-live="polite"></div></div><div class="panel main"></div>
-      <details class="panel"><summary>Luật chơi</summary><p>Mỗi người có 4 lá và 1 lá Gỡ bom. Đến lượt, đánh bao nhiêu lá tùy ý (hoặc không đánh), rồi rút một lá để kết thúc lượt. Rút trúng Bom thì phải dùng lá Gỡ bom (rồi cất bom lại chỗ nào tùy bạn trong chồng bài), không có thì bị loại. Né: kết thúc lượt không rút. Tấn công: kết thúc lượt không rút, người kế phải đi 2 lượt. Xào bài: xáo chồng bài. Nhìn trước: xem 3 lá trên cùng. Xin bài: người bạn chọn đưa cho bạn một lá tùy họ. Hai lá mèo giống nhau: lấy trộm một lá ngẫu nhiên của người bạn chọn. Người cuối cùng còn sống thắng. Bài trên tay nằm ở vùng riêng của phòng, chồng bài rút thì ai kỹ thuật cũng xem được, nên chơi theo danh dự. Việc xin bài và lấy trộm cần máy người bị chọn đang mở app để xử lý.</p></details></section>`;
+      <details class="rules-panel"><summary><span>📖 Luật chơi &amp; Hướng dẫn thẻ bài</span></summary>
+        <div class="rules-content">
+          <div class="rules-sec">
+            <h4>🎯 Mục tiêu trò chơi</h4>
+            <p style="margin:0;font-size:0.88rem;color:#f3ecda;line-height:1.45">Mỗi người khởi đầu với <b>4 lá ngẫu nhiên + 1 lá Gỡ bom</b>. Hãy sống sót đến cùng! Người chơi cuối cùng còn sống sót trên bàn sẽ giành chiến thắng tuyệt đối.</p>
+          </div>
+          <div class="rules-sec">
+            <h4>🔄 Vòng chơi mỗi lượt</h4>
+            <ul class="rules-steps">
+              <li class="rules-step"><span class="rules-num">1</span><span><b>Hành động (tùy chọn):</b> Đánh bao nhiêu lá chức năng tùy thích (hoặc không đánh lá nào).</span></li>
+              <li class="rules-step"><span class="rules-num">2</span><span><b>Rút bài (bắt buộc):</b> Bấm nút "Rút bài" để kết thúc lượt. Nếu không may rút trúng <b>Bom</b> mà không có <b>Gỡ bom</b>, bạn sẽ bị nổ tung và loại ngay lập tức!</span></li>
+            </ul>
+          </div>
+          <div class="rules-sec">
+            <h4>🃏 Minh họa chức năng từng lá bài</h4>
+            <div class="rules-grid">
+              <div class="rules-item">${cardSVG('X', 44)}<div class="rules-info"><b>Bom Nổ (Exploding Kitten)</b><span>Rút trúng là nổ tung! Bị loại ngay nếu không có lá Gỡ bom.</span></div></div>
+              <div class="rules-item">${cardSVG('D', 44)}<div class="rules-info"><b>Gỡ Bom (Defuse)</b><span>Cứu sống bạn khi dính bom. Được bí mật cất lại bom vào vị trí tùy chọn.</span></div></div>
+              <div class="rules-item">${cardSVG('S', 44)}<div class="rules-info"><b>Né Tránh (Skip)</b><span>Kết thúc lượt ngay lập tức mà không cần phải rút bài.</span></div></div>
+              <div class="rules-item">${cardSVG('A', 44)}<div class="rules-info"><b>Tấn Công (Attack)</b><span>Kết thúc lượt không rút bài, ép người kế tiếp phải đi 2 lượt!</span></div></div>
+              <div class="rules-item">${cardSVG('H', 44)}<div class="rules-info"><b>Xào Bài (Shuffle)</b><span>Trộn đều lại toàn bộ cọc bài rút để đổi vận may.</span></div></div>
+              <div class="rules-item">${cardSVG('F', 44)}<div class="rules-info"><b>Nhìn Trước (See the Future)</b><span>Bí mật nhìn trộm 3 lá trên cùng cọc bài rút.</span></div></div>
+              <div class="rules-item">${cardSVG('V', 44)}<div class="rules-info"><b>Xin Bài (Favor)</b><span>Bắt một người chơi khác phải tự chọn và giao nộp 1 lá bài cho bạn.</span></div></div>
+              <div class="rules-item">${cardSVG('C1', 44)}<div class="rules-info"><b>Cặp Mèo Giống Nhau</b><span>Đánh cặp 2 lá mèo giống nhau để lấy trộm 1 lá ngẫu nhiên của đối thủ!</span></div></div>
+            </div>
+          </div>
+          <div class="rules-tip">
+            💡 <b>Chiến thuật đỉnh cao:</b> Khi gỡ được bom, hãy cân nhắc đặt quả bom ngay trên cùng (vị trí 0) để gài bẫy người kế tiếp, hoặc nhét sâu xuống dưới để mua thêm thời gian!
+          </div>
+        </div>
+      </details></section>`;
     const q = s => el.querySelector(s), ps = () => room.players().slice(0, 5), seat = () => ps().findIndex(p => p.uid === me.uid);
     const norm = v => v ? { ...v, pile: vals(v.pile), disc: vals(v.disc), counts: vals(v.counts), alive: vals(v.alive), left: v.left || 1, pend: v.pend || null, bomb: v.bomb ?? null } : null;
     const pack = n => ({ ...n, winner: n.winner ?? null, pend: n.pend ?? null, bomb: n.bomb ?? null });
@@ -28,22 +58,22 @@ export default {
       if (!st.pend) busy = false;
       const alive = mi >= 0 && st.alive[mi], mine = alive && st.turn === mi && st.winner == null, free = mine && !st.pend && st.bomb == null && !pick;
       const give = st.pend?.type === 'favor' && st.pend.to === mi && alive, targets = P.map((p, i) => i).filter(i => i !== mi && st.alive[i] && st.counts[i] > 0);
-      q('.turn').textContent = st.winner != null ? `${P[st.winner]?.name} thắng!` : `Lượt của ${P[st.turn]?.name || '?'}${st.left > 1 ? ` (còn ${st.left} lượt)` : ''}`;
+      q('.turn').textContent = st.winner != null ? `🏆 ${P[st.winner]?.name} là người sống sót duy nhất!` : `Lượt của ${P[st.turn]?.name || '?'}${st.left > 1 ? ` (còn ${st.left} lượt!)` : ''}`;
       const bombs = st.alive.reduce((a, b) => a + b, 0) - 1;
       let act = '';
       if (st.winner != null) act = '';
-      else if (st.bomb === mi && mine) act = `<p class="msg">Bạn đã gỡ bom! Cất bom lại vào chồng bài (0 là trên cùng, ${st.pile.length} là dưới cùng):</p><div class="row"><input type="range" class="pos" min="0" max="${st.pile.length}" value="${Math.min(2, st.pile.length)}" aria-label="Vị trí cất bom"><output class="posv">${Math.min(2, st.pile.length)}</output><button class="btn pri" data-a="bomb">Cất bom</button></div>`;
-      else if (give) act = `<p class="msg">${esc(P[st.pend.by]?.name)} xin bài. Chạm vào một lá của bạn để đưa.</p>`;
-      else if (st.pend && st.pend.by === mi) act = `<p class="msg">Chờ ${esc(P[st.pend.to]?.name)} xử lý…</p>`;
-      else if (pick) act = `<p class="msg">${pick.type === 'favor' ? 'Xin bài của ai?' : 'Lấy trộm bài của ai?'}</p><div class="row">${targets.map(i => `<button class="btn" data-t="${i}">${esc(P[i].name)} (${st.counts[i]} lá)</button>`).join('') || 'Không ai có bài.'}<button class="btn" data-a="cancel">Hủy</button></div>`;
-      else if (mine) act = `<p class="msg">Đến lượt bạn: đánh lá tùy ý rồi rút bài để kết thúc lượt.</p><div class="row"><button class="btn pri" data-a="draw">Rút bài, kết thúc lượt</button></div>`;
-      else act = `<p class="msg">${mi < 0 ? 'Bạn đang xem.' : !alive ? 'Bạn đã bị loại.' : 'Chờ người khác…'}</p>`;
+      else if (st.bomb === mi && mine) act = `<div class="panel" style="background:#dc262622;border:1px solid #dc262655"><p class="msg" style="color:#fca5a5;font-weight:700">🚨 Bạn đã gỡ bom thành công! Hãy chọn vị trí cất bí mật quả bom vào lại cọc bài (0 là trên cùng, ${st.pile.length} là dưới cùng):</p><div class="row" style="justify-content:center;gap:12px"><input type="range" class="pos" min="0" max="${st.pile.length}" value="${Math.min(2, st.pile.length)}" aria-label="Vị trí cất bom" style="max-width:200px"><output class="posv" style="font-weight:900;font-size:1.2rem;min-width:24px">${Math.min(2, st.pile.length)}</output><button class="btn pri" data-a="bomb">Cất bom vào vị trí</button></div></div>`;
+      else if (give) act = `<p class="msg" style="color:#f472b6;font-weight:700">🤲 ${esc(P[st.pend.by]?.name)} đang xin bài của bạn. Hãy chạm vào một lá để trao đi.</p>`;
+      else if (st.pend && st.pend.by === mi) act = `<p class="msg">⏳ Đang chờ ${esc(P[st.pend.to]?.name)} xử lý yêu cầu…</p>`;
+      else if (pick) act = `<div class="panel" style="background:#3b82f622;border:1px solid #3b82f655"><p class="msg" style="font-weight:700">${pick.type === 'favor' ? '🤲 Bạn muốn xin bài của ai?' : '🐱 Bạn muốn trộm bài của ai?'}</p><div class="row" style="justify-content:center">${targets.map(i => `<button class="btn" data-t="${i}">👤 ${esc(P[i].name)} (${st.counts[i]} lá)</button>`).join('') || 'Không ai có bài.'}<button class="btn" data-a="cancel">Hủy</button></div></div>`;
+      else if (mine) act = `<p class="msg">👉 Đến lượt bạn: đánh các lá hỗ trợ (hoặc không), rồi bấm nút rút bài để kết thúc lượt.</p><div class="row" style="justify-content:center"><button class="btn pri" data-a="draw" style="font-size:1.05rem;padding:12px 24px">🃏 Rút bài & Kết thúc lượt</button></div>`;
+      else act = `<p class="msg">${mi < 0 ? 'Bạn đang ở chế độ xem.' : !alive ? '💀 Bạn đã dính bom và bị loại khỏi ván này.' : 'Đang chờ đối thủ ra đòn…'}</p>`;
       main.innerHTML = `<div class="opps">${P.map((p, i) => i === mi ? '' : `<div class="opp ${i === st.turn && st.winner == null ? 'cur' : ''} ${st.alive[i] ? '' : 'dead'}">${avatarSVG(p.avatar, 30)}<b>${esc(p.name)}</b><span>${st.alive[i] ? st.counts[i] + ' lá' : '💥 bị loại'}</span></div>`).join('')}</div>
-        <div class="center"><div class="pile" aria-label="Chồng bài còn ${st.pile.length} lá">${backSVG(60)}<small>${st.pile.length}</small></div><div class="topc">${st.disc.length ? cardSVG(st.disc.at(-1), 60) : '<span class="msg">Chưa đánh lá nào</span>'}</div></div>
-        <p class="msg">💣 còn ${bombs} quả bom trong chồng bài. ${esc(st.log || '')}</p>
-        ${peek ? `<p class="msg">3 lá trên cùng:</p><div class="hand">${peek.map(c => cardSVG(c, 44)).join('')}</div>` : ''}${act}
-        <div class="hand">${sortHand(hand).map(c => `<button class="hc ${free || give ? 'ok' : ''}" data-c="${c}" ${free || give ? '' : 'disabled'}>${cardSVG(c, 56)}</button>`).join('')}</div>
-        <div class="row"><button class="btn" data-a="deal">${st.winner != null ? 'Chia ván mới' : 'Chia lại'}</button></div>`;
+        <div class="center"><div class="pile" aria-label="Chồng bài còn ${st.pile.length} lá">${backSVG(70)}<small>${st.pile.length}</small></div><div class="topc">${st.disc.length ? cardSVG(st.disc.at(-1), 74) : '<span class="msg" style="opacity:0.6;font-size:0.85rem">Chưa có lá nào</span>'}</div></div>
+        <p class="msg" style="text-align:center">💣 Còn <b>${bombs}</b> quả bom trong cọc rút. ${st.log ? `<br><small style="color:var(--mute)">📜 ${esc(st.log)}</small>` : ''}</p>
+        ${peek ? `<div class="panel" style="background:#0891b222;border:1px solid #0891b255"><p class="msg" style="color:#67e8f9;font-weight:700">🔮 3 lá trên cùng cọc bài rút:</p><div class="hand">${peek.map(c => cardSVG(c, 56)).join('')}</div></div>` : ''}${act}
+        <div class="hand">${sortHand(hand).map(c => `<button class="hc ${free || give ? 'ok' : ''}" data-c="${c}" ${free || give ? '' : 'disabled'}>${cardSVG(c, 64)}</button>`).join('')}</div>
+        <div class="row" style="justify-content:center;margin-top:12px"><button class="btn" data-a="deal">${st.winner != null ? 'Chia ván mới' : 'Chia lại'}</button></div>`;
       const rg = q('.pos'); if (rg) rg.oninput = () => q('.posv').textContent = rg.value;
       if (st.winner != null && !won && st.winner === mi) fanfare(); won = st.winner != null;
       // lấy trộm: máy người bị chọn tự rút ngẫu nhiên một lá đưa đi
