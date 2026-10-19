@@ -7,6 +7,12 @@ export const INFO = {
   H: ['🔀', 'Xào bài', '#9333EA', '#7E22CE', 'Trộn lại cọc bài rút'],
   F: ['🔮', 'Nhìn trước', '#0891B2', '#0E7490', 'Xem 3 lá trên cùng'],
   V: ['🙏', 'Xin bài', '#DB2777', '#BE185D', 'Bắt 1 người nộp bài'],
+  B: ['⚓', 'Rút đáy', '#0284C7', '#0369A1', 'Rút lá dưới đáy cọc bài'],
+  T: ['🔮⚡', 'Thao túng', '#4F46E5', '#3730A3', 'Xếp lại thứ tự 3 lá đầu'],
+  W: ['🔄', 'Đảo đầu đuôi', '#0D9488', '#0F766E', 'Đổi chỗ lá đỉnh và đáy'],
+  M: ['🐱✨', 'Mèo đa năng', '#D97706', '#92400E', 'Ghép với bất kỳ mèo nào'],
+  K: ['🛡️💣', 'Mèo ôm bom', '#E11D48', '#BE123C', 'Cầm bom trên tay không nổ'],
+  N: ['🚫', 'Chặn đứng', '#BE185D', '#9D174D', 'Vô hiệu hóa đối thủ'],
   C1: ['🌮', 'Mèo Taco', '#D97706', '#B45309', 'Cặp đôi lấy trộm 1 lá'],
   C2: ['🍉', 'Mèo Dưa Hấu', '#059669', '#047857', 'Cặp đôi lấy trộm 1 lá'],
   C3: ['🥔', 'Mèo Khoai Tây', '#78350F', '#451A03', 'Cặp đôi lấy trộm 1 lá'],
@@ -221,6 +227,108 @@ function getIllustration(code) {
         <circle cx="47" cy="45" r="1.5" fill="#000"/><circle cx="53" cy="45" r="1.5" fill="#000"/>
         <path d="M48 49 Q50 51 52 49" stroke="#5B21B6" stroke-width="1" fill="none"/>
         <text x="32" y="32" font-size="8" fill="#A78BFA">✨</text>
+      `;
+
+    case 'B': // RÚT ĐÁY: Mèo thò tay rút lá dưới đáy cọc bài
+      return `
+        <rect x="20" y="24" width="60" height="58" rx="6" fill="#F0F9FF"/>
+        <!-- Cọc bài xếp tầng -->
+        <rect x="36" y="32" width="28" height="38" rx="2" fill="#E2E8F0" stroke="#0284C7" stroke-width="1.2"/>
+        <rect x="34" y="34" width="28" height="38" rx="2" fill="#CBD5E1" stroke="#0284C7" stroke-width="1.2"/>
+        <rect x="32" y="36" width="28" height="38" rx="2" fill="#94A3B8" stroke="#0284C7" stroke-width="1.2"/>
+        <!-- Lá bài dưới đáy bị rút xéo ra -->
+        <rect x="22" y="58" width="26" height="18" rx="2" fill="#38BDF8" stroke="#0284C7" stroke-width="1.5" transform="rotate(-15 35 67)"/>
+        <!-- Bàn chân mèo thò vào rút -->
+        <ellipse cx="25" cy="65" rx="7" ry="5" fill="#F59E0B" transform="rotate(25 25 65)"/>
+        <path d="M48 76 L48 68 M44 72 L48 68 L52 72" stroke="#0284C7" stroke-width="2" fill="none"/>
+        <text x="68" y="42" font-size="12">⚓</text>
+      `;
+
+    case 'T': // THAO TÚNG: Mèo phù thủy lơ lửng 3 lá bài đổi chỗ
+      return `
+        <rect x="20" y="24" width="60" height="58" rx="6" fill="#EEF2FF"/>
+        <!-- 3 lá bài lơ lửng đổi chỗ -->
+        <rect x="25" y="36" width="12" height="18" rx="1.5" fill="#C7D2FE" stroke="#4F46E5" stroke-width="1.2" transform="rotate(-15 31 45)"/>
+        <text x="31" y="48" font-size="8" font-weight="900" fill="#4F46E5" text-anchor="middle">1</text>
+        <rect x="44" y="32" width="12" height="18" rx="1.5" fill="#818CF8" stroke="#4F46E5" stroke-width="1.2"/>
+        <text x="50" y="44" font-size="8" font-weight="900" fill="#fff" text-anchor="middle">2</text>
+        <rect x="63" y="36" width="12" height="18" rx="1.5" fill="#C7D2FE" stroke="#4F46E5" stroke-width="1.2" transform="rotate(15 69 45)"/>
+        <text x="69" y="48" font-size="8" font-weight="900" fill="#4F46E5" text-anchor="middle">3</text>
+        <!-- Mũi tên uốn lượn đổi chỗ -->
+        <path d="M36 58 Q50 66 64 58" stroke="#4F46E5" stroke-width="1.8" fill="none" stroke-dasharray="2,2"/>
+        <!-- Đũa phép mèo phát sáng -->
+        <line x1="28" y1="72" x2="48" y2="60" stroke="#F59E0B" stroke-width="2.2" stroke-linecap="round"/>
+        <polygon points="48,58 50,62 46,62" fill="#FBBF24"/>
+        <text x="54" y="66" font-size="9" fill="#4F46E5">✨</text>
+      `;
+
+    case 'W': // ĐẢO ĐẦU ĐUÔI: Mũi tên đảo giữa đỉnh và đáy
+      return `
+        <rect x="20" y="24" width="60" height="58" rx="6" fill="#F0FDFA"/>
+        <!-- Cọc bài thẳng đứng -->
+        <rect x="38" y="30" width="24" height="46" rx="3" fill="#CCFBF1" stroke="#0D9488" stroke-width="1.5"/>
+        <line x1="42" y1="38" x2="58" y2="38" stroke="#0D9488" stroke-width="1.2"/>
+        <line x1="42" y1="68" x2="58" y2="68" stroke="#0D9488" stroke-width="1.2"/>
+        <!-- Mũi tên vòng từ trên xuống dưới -->
+        <path d="M35 34 C20 34 20 72 34 72" stroke="#0D9488" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <polygon points="34,68 39,72 34,76" fill="#0D9488"/>
+        <!-- Mũi tên vòng từ dưới lên trên -->
+        <path d="M65 72 C80 72 80 34 66 34" stroke="#14B8A6" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <polygon points="66,38 61,34 66,30" fill="#14B8A6"/>
+        <circle cx="50" cy="53" r="5" fill="#0D9488"/>
+        <text x="50" y="56" font-size="7" fill="#fff" text-anchor="middle">⇅</text>
+      `;
+
+    case 'M': // MÈO ĐA NĂNG: Mèo tắc kè hoa đầy màu sắc
+      return `
+        <rect x="20" y="24" width="60" height="58" rx="6" fill="#FFFBEB"/>
+        <!-- Đầu mèo vằn nhiều màu rực rỡ -->
+        <circle cx="50" cy="52" r="16" fill="#FEF08A" stroke="#B45309" stroke-width="2"/>
+        <polygon points="36,40 40,26 47,38" fill="#F472B6" stroke="#B45309" stroke-width="1.5"/>
+        <polygon points="53,38 60,26 64,40" fill="#60A5FA" stroke="#B45309" stroke-width="1.5"/>
+        <circle cx="44" cy="50" r="2.5" fill="#111"/><circle cx="56" cy="50" r="2.5" fill="#111"/>
+        <ellipse cx="50" cy="55" rx="3" ry="1.5" fill="#EF4444"/>
+        <path d="M47 58 Q50 61 53 58" stroke="#000" stroke-width="1.2" fill="none"/>
+        <!-- Mặt nạ siêu nhân đa năng -->
+        <path d="M40 48 Q50 44 60 48" stroke="#8B5CF6" stroke-width="2" fill="none"/>
+        <text x="30" y="36" font-size="10">🌟</text>
+        <text x="64" y="36" font-size="10">✨</text>
+      `;
+
+    case 'K': // MÈO ÔM BOM: Chú mèo ôm quả bom đang cháy ngòi tỉnh bơ
+      return `
+        <rect x="20" y="24" width="60" height="58" rx="6" fill="#FFF1F2"/>
+        <!-- Quả bom đen tròn to -->
+        <circle cx="54" cy="58" r="15" fill="#1E293B" stroke="#881337" stroke-width="1.8"/>
+        <path d="M60 45 C64 40 68 44 72 38" stroke="#F59E0B" stroke-width="2" fill="none"/>
+        <circle cx="72" cy="38" r="3" fill="#EF4444"/>
+        <text x="70" y="34" font-size="8">💥</text>
+        <!-- Chú mèo ôm trọn quả bom mặt cười ngầu -->
+        <ellipse cx="40" cy="54" rx="14" ry="12" fill="#FDA4AF" stroke="#881337" stroke-width="1.8"/>
+        <polygon points="30,44 33,32 38,42" fill="#F43F5E"/>
+        <polygon points="42,42 47,32 50,44" fill="#F43F5E"/>
+        <!-- Hai tay mèo ôm quả bom -->
+        <ellipse cx="48" cy="58" rx="5" ry="3" fill="#FDA4AF" stroke="#881337" stroke-width="1"/>
+        <!-- Kính râm đen siêu ngầu -->
+        <rect x="34" y="50" width="5" height="4" rx="1" fill="#111"/>
+        <rect x="41" y="50" width="5" height="4" rx="1" fill="#111"/>
+        <line x1="39" y1="52" x2="41" y2="52" stroke="#111" stroke-width="1.5"/>
+      `;
+
+    case 'N': // CHẶN ĐỨNG (NOPE): Biển cấm bàn tay kiên quyết
+      return `
+        <rect x="20" y="24" width="60" height="58" rx="6" fill="#FDF2F8"/>
+        <!-- Vòng tròn cấm viền đỏ dày -->
+        <circle cx="50" cy="53" r="20" fill="#fff" stroke="#BE185D" stroke-width="4"/>
+        <!-- Bàn chân mèo giơ lên dứt khoát -->
+        <ellipse cx="50" cy="53" rx="11" ry="9" fill="#BE185D"/>
+        <circle cx="43" cy="48" r="2.2" fill="#FCE7F3"/>
+        <circle cx="48" cy="45" r="2.2" fill="#FCE7F3"/>
+        <circle cx="53" cy="45" r="2.2" fill="#FCE7F3"/>
+        <circle cx="57" cy="48" r="2.2" fill="#FCE7F3"/>
+        <!-- Đường gạch chéo NOPE -->
+        <line x1="36" y1="39" x2="64" y2="67" stroke="#9D174D" stroke-width="3.5" stroke-linecap="round"/>
+        <text x="50" y="77" font-size="8.5" font-weight="900" font-family="'Arial Black', sans-serif" fill="#BE185D" text-anchor="middle">NOPE!</text>
       `;
 
     default:
