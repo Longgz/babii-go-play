@@ -31,9 +31,14 @@ fieldset{border:0;padding:0;margin:10px 0}legend{color:var(--mute);font-weight:6
 .opt.on,.sw.on{border-color:var(--lantern)}
 .avrow{align-items:center;text-decoration:none;color:inherit}
 .chip svg{vertical-align:middle}
-.ludo{width:100%;max-width:420px;display:block;margin:0 auto}
-.ludo .lg{stroke:#f4b942;stroke-width:3;cursor:pointer;animation:blink 1s infinite}
-@keyframes blink{50%{stroke-opacity:.25}}
+.ludo{width:100%;max-width:440px;display:block;margin:0 auto;filter:drop-shadow(0 8px 24px rgba(0,0,0,0.5))}
+.ludo .lg,.horse-ready{cursor:pointer;animation:horse-jump 0.8s ease-in-out infinite alternate}
+@keyframes horse-jump{0%{transform:scale(1)}100%{transform:scale(1.28);filter:drop-shadow(0 0 12px #f4b942)}}
+.pulse-aura{animation:pulse-aura 1.2s ease-out infinite}
+@keyframes pulse-aura{0%{r:9;opacity:0.7}100%{r:18;opacity:0}}
+.dice-six{animation:dice-glow 0.8s ease-in-out infinite alternate}
+@keyframes dice-glow{0%{filter:drop-shadow(0 0 6px #f4b942)}100%{filter:drop-shadow(0 0 18px #f59e0b) drop-shadow(0 0 6px #ef4444)}}
+
 .bgrid{display:grid;grid-template-columns:repeat(10,1fr);gap:2px;width:min(100%,360px);margin:6px auto;background:#0b1230;padding:4px;border-radius:12px}
 .bgrid.sm{width:min(100%,220px)}
 .bc{display:block;aspect-ratio:1;border:0;border-radius:4px;background:#27406e;color:#fff;font:inherit;font-size:.9rem;padding:0;line-height:1;text-align:center}
@@ -82,4 +87,27 @@ button.bc:not(:disabled){cursor:pointer}
 .rules-info b{display:block;font-size:.92rem;margin-bottom:3px;color:#fff}
 .rules-info span{color:var(--mute)}
 .rules-tip{background:#f4b9421a;border:1px dashed #f4b94266;border-radius:12px;padding:10px 14px;font-size:.84rem;color:#ffe4a0;line-height:1.45}
+
+/* Hệ thống Vật phẩm & Túi đồ Cờ Cá Ngựa */
+.board-item{animation:item-bob 1.8s ease-in-out infinite alternate}
+@keyframes item-bob{0%{transform:translateY(0)}100%{transform:translateY(-3px)}}
+.item-box{animation:item-glow 1.5s infinite alternate}
+@keyframes item-glow{0%{filter:drop-shadow(0 0 2px #f59e0b)}100%{filter:drop-shadow(0 0 6px #f59e0b)}}
+
+.shield-aura{animation:shield-pulse 1.4s infinite alternate}
+@keyframes shield-pulse{0%{stroke-width:1.5;stroke-opacity:.7}100%{stroke-width:2.5;stroke-opacity:1}}
+.horse-frozen{opacity:.75;filter:drop-shadow(0 0 6px #06b6d4)}
+
+.inventory-wrap{margin:10px 0;background:#ffffff0d;border:1px solid #ffffff1a;border-radius:14px;padding:8px 12px}
+.inventory-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;font-size:.82rem;font-weight:700;color:var(--mute)}
+.inventory-list{display:flex;gap:8px;flex-wrap:wrap}
+.skill-card{display:flex;align-items:center;gap:8px;background:#ffffff18;border:1px solid #ffffff33;border-radius:12px;padding:6px 12px;font-size:.84rem;font-weight:700;color:#fff;cursor:pointer;transition:transform .15s,box-shadow .15s}
+.skill-card:hover:not(:disabled){transform:translateY(-2px) scale(1.03);box-shadow:0 4px 12px rgba(244,185,66,.35)}
+.skill-card:disabled{opacity:.5;cursor:not-allowed}
+.skill-card small{font-weight:400;font-size:.72rem;opacity:.8}
+
+.golden-picker{display:flex;align-items:center;justify-content:center;gap:8px;background:#f59e0b1f;border:1px solid #f59e0b55;border-radius:14px;padding:8px 12px;margin:8px 0}
+.btn-dice-val{width:34px;height:34px;border-radius:8px;border:1px solid #f59e0b88;background:#f59e0b;color:#1e293b;font-weight:900;font-size:.95rem;cursor:pointer;transition:transform .12s}
+.btn-dice-val:hover{transform:scale(1.15);box-shadow:0 0 8px #f59e0b}
+
 
