@@ -1,1 +1,16 @@
-{}
+{
+  "hanoi": {
+    "file": "hanoi-360.jpg",
+    "credit": "bemaps_hn_kien (Mapillary / Wikimedia Commons)",
+    "license": "CC BY-SA 4.0",
+    "haov": 360,
+    "vaov": 180
+  },
+  "halong": {
+    "file": "halong-pano.jpg",
+    "credit": "Mustang Joe (Flickr / Wikimedia Commons)",
+    "license": "CC0",
+    "haov": 200,
+    "vaov": 70
+  }
+}
