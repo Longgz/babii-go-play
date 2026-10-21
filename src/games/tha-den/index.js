@@ -10,6 +10,12 @@ const KIND = {
   tim: { name: '💖 Trái tim yêu thương', icon: '💖', desc: 'Lời tỏ tình & nhắn nhủ ngọt ngào' }
 };
 
+const DEFAULT_WISHES = {
+  den: 'Thắp sáng ước mơ & bình an ✨',
+  dieu: 'Bay cao đón gió tự do 🪁',
+  tim: 'Yêu thương gửi trao 💖'
+};
+
 const TIMER_OPTIONS = [
   { val: 0, label: '🔓 Mở ngay (Ai cũng xem được)' },
   { val: 60 * 1000, label: '⏳ Mở sau 1 phút (Thử nghiệm)' },
@@ -150,9 +156,9 @@ export default {
             `).join('')}
           </div>
 
-          <!-- Nhập điều ước / lời nhắn -->
+          <!-- Nhập điều ước / lời nhắn (có thể để trống để thả nhanh làm đẹp trời) -->
           <div style="margin-bottom:12px">
-            <input class="wish-input" maxlength="120" placeholder="Viết điều ước, lời tỏ tình hoặc tâm sự bí mật..." aria-label="Lời nhắn" style="width:100%;box-sizing:border-box;padding:10px 14px;font-size:0.95rem">
+            <input class="wish-input" maxlength="120" placeholder="Viết điều ước, lời nhắn (hoặc để trống để thả nhanh cho đẹp trời ✨)..." aria-label="Lời nhắn" style="width:100%;box-sizing:border-box;padding:10px 14px;font-size:0.95rem">
           </div>
 
           <!-- Tùy chọn nâng cao: Số lượng đèn & Hẹn giờ đếm ngược -->
@@ -179,7 +185,7 @@ export default {
           </div>
 
           <div class="row" style="justify-content:center">
-            <button class="btn pri release-btn" style="font-size:1.05rem;padding:10px 24px;border-radius:99px">
+            <button class="btn pri release-btn" style="font-size:1.05rem;padding:10px 24px;border-radius:99px;cursor:pointer">
               ✨ Thả lên trời
             </button>
           </div>
@@ -215,13 +221,14 @@ export default {
         const isLocked = it.unlockAt && now < it.unlockAt;
         const diff = isLocked ? it.unlockAt - now : 0;
         const isAuthor = it.uid === me.uid;
+        const defaultText = DEFAULT_WISHES[it.kind] || 'Nguyện ước an lành';
 
         return `
           <button class="fl ${selectedItem?.id === id ? 'focus' : ''}" 
             data-item-id="${id}"
             style="left:${x}%;top:${y}%;--t:${6 + (h % 6)}s;--dx:${(h % 5) * 6 - 12}px;--dy:${(h % 7) * 4 - 12}px"
-            title="${isLocked && !isAuthor ? 'Đèn ước bí mật (Đang khóa)' : esc(it.text)}"
-            aria-label="${KIND[it.kind]?.name || 'Đèn'}: ${isLocked && !isAuthor ? 'Đang khóa' : esc(it.text)}">
+            title="${isLocked && !isAuthor ? 'Đèn ước bí mật (Đang khóa)' : esc(it.text || defaultText)}"
+            aria-label="${KIND[it.kind]?.name || 'Đèn'}: ${isLocked && !isAuthor ? 'Đang khóa' : esc(it.text || defaultText)}">
             ${getItemSVG(it.kind, it.color || '#f4b942')}
             <span class="fl-badge ${isLocked ? '' : 'unlocked'}">
               ${isLocked ? formatBadge(diff) : (it.hearts ? `❤️ ${it.hearts}` : '✨')}
@@ -236,6 +243,7 @@ export default {
         const isAuthor = it.uid === me.uid;
         const icon = KIND[it.kind]?.icon || '🏮';
         const authorName = esc(it.author || nameOf(it.uid));
+        const defaultText = DEFAULT_WISHES[it.kind] || 'Thắp sáng bầu trời';
 
         return `
           <li data-item-id="${id}">
@@ -248,14 +256,24 @@ export default {
             <div style="font-size:0.88rem;color:#f3ecda">
               ${isLocked && !isAuthor
                 ? '<i style="color:var(--mute)">🔒 Lời ước đang được niêm phong thời gian... Bấm để xem đếm ngược</i>'
-                : esc(it.text)}
+                : (it.text ? esc(it.text) : `<i style="color:#fde68a">✨ ${defaultText}</i>`)}
             </div>
           </li>
         `;
       }).join('') || '<li style="text-align:center;color:var(--mute)">Chưa có ngọn đèn nào trên bầu trời. Hãy là người đầu tiên thả nhé!</li>';
 
-      // Render modal nếu đang mở xem 1 vật phẩm
-      renderModal();
+      // Cập nhật modal nếu đang mở
+      if (selectedItem) {
+        if (!st[selectedItem.id]) {
+          selectedItem = null;
+          renderModal();
+        } else {
+          const likeBtn = q('[data-action="like-wish"]');
+          if (likeBtn) {
+            likeBtn.textContent = `❤️ Thả tim (${st[selectedItem.id].hearts || 0})`;
+          }
+        }
+      }
     }
 
     // Render Modal xem chi tiết điều ước khi bấm vào đèn/diều/trái tim
@@ -280,13 +298,17 @@ export default {
       const authorAvatar = avatarOf(it.uid);
       const authorName = esc(it.author || nameOf(it.uid));
       const kindInfo = KIND[it.kind] || KIND.den;
+      const defaultText = DEFAULT_WISHES[it.kind] || 'Thắp sáng bầu trời';
+      const displayText = it.text
+        ? `"${esc(it.text)}"`
+        : `<span style="font-weight:600;color:#fef08a">✨ ${defaultText}</span>`;
 
       modalBox.innerHTML = `
         <div class="wish-modal-mask" data-action="close-modal">
-          <div class="wish-modal-card" onclick="event.stopPropagation()">
+          <div class="wish-modal-card">
             
             <!-- Nút đóng góc phải -->
-            <button data-action="close-modal" style="position:absolute;top:14px;right:16px;background:none;border:none;color:#94a3b8;font-size:1.4rem;cursor:pointer">✕</button>
+            <button data-action="close-modal" aria-label="Đóng" style="position:absolute;top:14px;right:16px;background:none;border:none;color:#94a3b8;font-size:1.4rem;cursor:pointer;line-height:1;padding:4px">✕</button>
 
             <!-- Tiêu đề & Tác giả -->
             <div style="display:flex;align-items:center;gap:12px;border-bottom:1px solid #ffffff1a;padding-bottom:12px;margin-bottom:14px">
@@ -313,7 +335,7 @@ export default {
               ${isAuthor ? `
                 <div style="background:#00000044;border-radius:12px;padding:10px 14px;margin:10px 0;border-left:4px solid var(--lantern)">
                   <span style="font-size:0.75rem;color:var(--mute);display:block;margin-bottom:2px">Nội dung bạn đã ghi:</span>
-                  <div style="font-size:0.95rem;color:#fff;font-style:italic">"${esc(it.text)}"</div>
+                  <div style="font-size:0.95rem;color:#fff;font-style:italic">${displayText}</div>
                 </div>
               ` : `
                 <p style="font-size:0.82rem;color:var(--mute);text-align:center;margin:8px 0">
@@ -323,9 +345,9 @@ export default {
             ` : `
               <!-- Trường hợp ĐÃ MỞ (Ai cũng xem được) -->
               <div style="background:linear-gradient(135deg,#ffffff12,#ffffff06);border:1px solid #ffffff22;border-radius:16px;padding:16px;margin:14px 0;text-align:center;position:relative">
-                <span style="font-size:1.8rem;display:block;margin-bottom:8px">${kindInfo.icon}</span>
-                <p style="margin:0;font-size:1.05rem;line-height:1.55;color:#fffef0;font-style:italic;font-weight:600">
-                  "${esc(it.text)}"
+                <span style="font-size:2.2rem;display:block;margin-bottom:8px">${kindInfo.icon}</span>
+                <p style="margin:0;font-size:1.1rem;line-height:1.55;color:#fffef0;font-style:italic;font-weight:600">
+                  ${displayText}
                 </p>
                 <div style="font-size:0.75rem;color:var(--mute);margin-top:10px">
                   Thả lúc: ${new Date(it.at).toLocaleString('vi-VN')}
@@ -334,33 +356,31 @@ export default {
 
               <!-- Nút Thả tim đáp lại tình cảm -->
               <div class="row" style="justify-content:center;gap:10px">
-                <button class="btn pri" data-action="like-wish" data-id="${selectedItem.id}" style="font-size:0.95rem;padding:8px 20px;border-radius:99px">
+                <button class="btn pri" data-action="like-wish" data-id="${selectedItem.id}" style="font-size:0.95rem;padding:8px 20px;border-radius:99px;cursor:pointer">
                   ❤️ Thả tim (${it.hearts || 0})
                 </button>
               </div>
             `}
 
             <div class="row" style="justify-content:center;margin-top:14px">
-              <button class="btn" data-action="close-modal" style="font-size:0.88rem;padding:6px 18px">Đóng</button>
+              <button class="btn" data-action="close-modal" style="font-size:0.88rem;padding:6px 22px;cursor:pointer">Đóng</button>
             </div>
           </div>
         </div>
       `;
     }
 
-    // Xử lý nút Thả lên trời
+    // Xử lý nút Thả lên trời (không bắt buộc phải ghi nội dung)
     q('.release-btn').onclick = () => {
       const textInput = q('.wish-input');
       const t = textInput.value.trim();
-      if (!t) return ctx.toast('Hãy viết điều ước hoặc lời nhắn trước khi thả nhé!');
-
-      const kind = el.querySelector('input[name=k]:checked').value;
-      const count = +q('.count-select').value || 1;
-      const timerVal = +q('.timer-select').value;
+      const kind = el.querySelector('input[name=k]:checked')?.value || 'den';
+      const count = +q('.count-select')?.value || 1;
+      const timerVal = +q('.timer-select')?.value || 0;
       const now = Date.now();
       const unlockAt = timerVal > 0 ? now + timerVal : null;
 
-      const colors = ['#f4b942', '#f43f5e', '#38bdf8', '#a855f7', '#fb923c'];
+      const colors = ['#f4b942', '#f43f5e', '#38bdf8', '#a855f7', '#fb923c', '#ec4899', '#10b981'];
       const chosenColor = colors[Math.random() * colors.length | 0];
 
       // Thả số lượng đèn theo yêu cầu (1, 3, 5, 7)
@@ -370,7 +390,7 @@ export default {
         updates['g/den/items/' + id] = {
           uid: me.uid,
           author: me.name,
-          text: t,
+          text: t, // Có thể rỗng, vẫn thả được để trang trí bầu trời
           kind,
           color: chosenColor,
           at: now + i,
@@ -388,19 +408,27 @@ export default {
       ctx.ping(null, `${me.name} vừa thả ${count > 1 ? `${count} chiếc ` : ''}${kindName} lên bầu trời!`);
     };
 
+    // Nhấn Enter trong ô nhập cũng thả ngay
+    q('.wish-input').onkeydown = e => {
+      if (e.key === 'Enter') {
+        q('.release-btn').click();
+      }
+    };
+
     // Xử lý tương tác nhấn vào đèn trên trời hoặc danh sách
     el.onclick = e => {
-      const b = e.target.closest('[data-item-id],[data-action]');
-      if (!b) return;
-
-      if (b.dataset.action === 'close-modal') {
+      // 1. Đóng modal nếu nhấn nút close hoặc click ra ngoài vùng mask
+      const closeBtn = e.target.closest('[data-action="close-modal"]');
+      if (closeBtn || e.target.classList.contains('wish-modal-mask')) {
         selectedItem = null;
         renderModal();
         return;
       }
 
-      if (b.dataset.action === 'like-wish') {
-        const id = b.dataset.id;
+      // 2. Thả tim
+      const likeBtn = e.target.closest('[data-action="like-wish"]');
+      if (likeBtn) {
+        const id = likeBtn.dataset.id;
         const it = st[id];
         if (it) {
           tone(784, 0.15, 0.18, 'sine');
@@ -410,19 +438,64 @@ export default {
         return;
       }
 
-      if (b.dataset.itemId) {
+      // 3. Nếu click bên trong card modal: không làm gì (không đóng, không mở lại)
+      if (e.target.closest('.wish-modal-card')) {
+        return;
+      }
+
+      // 4. Mở modal khi bấm vào vật phẩm trên bầu trời hoặc danh sách
+      const itemEl = e.target.closest('[data-item-id]');
+      if (itemEl) {
         clack();
-        selectedItem = { id: b.dataset.itemId };
+        selectedItem = { id: itemEl.dataset.itemId };
         renderModal();
       }
     };
 
-    // Bộ hẹn giờ cập nhật đếm ngược mỗi giây
+    // Nhấn phím Escape để đóng modal
+    const onKeyDown = e => {
+      if (e.key === 'Escape' && selectedItem) {
+        selectedItem = null;
+        renderModal();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+
+    // Bộ hẹn giờ cập nhật đếm ngược mỗi giây: CHỈ cập nhật số mà KHÔNG re-render DOM modal để tránh popup liên tục
     timerId = setInterval(() => {
-      // Chỉ cập nhật nếu có điều ước đang khóa hoặc đang mở modal
-      const hasLocked = Object.values(st).some(it => it.unlockAt && it.unlockAt > Date.now());
-      if (hasLocked || selectedItem) {
-        renderSky();
+      const now = Date.now();
+
+      // Cập nhật số đếm ngược trong modal nếu đang mở
+      if (selectedItem) {
+        const it = st[selectedItem.id];
+        if (it && it.unlockAt) {
+          const diff = it.unlockAt - now;
+          const digitsEl = q('.countdown-digits');
+          if (digitsEl) {
+            if (diff <= 0) {
+              renderModal(); // Vừa hết giờ, hiển thị nội dung
+            } else {
+              digitsEl.textContent = formatCountdown(diff);
+            }
+          }
+        }
+      }
+
+      // Cập nhật huy hiệu đếm ngược trên các vật phẩm bay
+      const hasLocked = Object.values(st).some(it => it.unlockAt && it.unlockAt > now);
+      if (hasLocked) {
+        el.querySelectorAll('.fl[data-item-id]').forEach(btn => {
+          const id = btn.dataset.itemId;
+          const it = st[id];
+          if (it && it.unlockAt) {
+            const badge = btn.querySelector('.fl-badge');
+            if (badge) {
+              const diff = it.unlockAt - now;
+              badge.textContent = formatBadge(diff);
+              if (diff <= 0) badge.classList.add('unlocked');
+            }
+          }
+        });
       }
     }, 1000);
 
@@ -435,7 +508,13 @@ export default {
       if (last && last.at > seen) {
         if (seen && last.uid !== me.uid) {
           const kindName = KIND[last.kind]?.name || 'một chiếc đèn';
-          q('.msg').textContent = `✨ ${esc(last.author || nameOf(last.uid))} vừa thả ${kindName} lên trời!`;
+          const msgEl = q('.msg');
+          if (msgEl) {
+            msgEl.textContent = `✨ ${esc(last.author || nameOf(last.uid))} vừa thả ${kindName} lên trời!`;
+            setTimeout(() => {
+              if (msgEl.textContent.includes('vừa thả')) msgEl.textContent = '';
+            }, 4500);
+          }
         }
         seen = last.at;
       }
@@ -445,6 +524,7 @@ export default {
 
     ctx.onLeave(() => {
       if (timerId) clearInterval(timerId);
+      window.removeEventListener('keydown', onKeyDown);
     });
   }
 };

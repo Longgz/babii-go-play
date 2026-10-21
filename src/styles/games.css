@@ -27,8 +27,8 @@
 .fl-badge.unlocked{color:#86efac;border-color:#22c55e88}
 
 /* Modal thiệp điều ước */
-.wish-modal-mask{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.65);backdrop-filter:blur(6px);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px}
-.wish-modal-card{background:linear-gradient(145deg,#1e1b4b,#0f172a);border:2px solid var(--lantern);border-radius:22px;padding:22px 20px;max-width:400px;width:100%;color:#fff;box-shadow:0 12px 36px rgba(0,0,0,0.7),0 0 30px rgba(244,185,66,0.25);animation:modal-pop .3s cubic-bezier(.34,1.56,.64,1);position:relative}
+.wish-modal-mask{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.65);backdrop-filter:blur(6px);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px;cursor:pointer}
+.wish-modal-card{background:linear-gradient(145deg,#1e1b4b,#0f172a);border:2px solid var(--lantern);border-radius:22px;padding:22px 20px;max-width:400px;width:100%;max-height:90vh;overflow-y:auto;color:#fff;box-shadow:0 12px 36px rgba(0,0,0,0.7),0 0 30px rgba(244,185,66,0.25);animation:modal-pop .3s cubic-bezier(.34,1.56,.64,1);position:relative;cursor:default}
 @keyframes modal-pop{0%{opacity:0;transform:scale(0.8)}100%{opacity:1;transform:scale(1)}}
 .countdown-box{background:rgba(245,158,11,0.12);border:1px solid #f59e0b66;border-radius:14px;padding:12px;margin:12px 0;text-align:center}
 .countdown-digits{font-size:1.6rem;font-weight:900;color:#fef08a;letter-spacing:1px;font-family:monospace;text-shadow:0 0 10px rgba(245,158,11,0.6)}
