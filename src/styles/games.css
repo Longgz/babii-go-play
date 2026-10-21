@@ -13,10 +13,27 @@
 .pick small{font-size:.8rem}
 .msg,.err{min-height:1.4em}.err{color:#ff9d92}
 .code{font-size:2rem;font-weight:800;letter-spacing:.2em;color:var(--lantern)}
-.sky2{position:relative;height:300px;border-radius:18px;overflow:hidden;background:linear-gradient(#0b1230,#1d2c58 60%,#27406e)}
-.fl{position:absolute;animation:drift var(--t) ease-in-out infinite alternate;filter:drop-shadow(0 0 8px #f4b94299)}
+.sky2{position:relative;height:480px;min-height:440px;border-radius:24px;overflow:hidden;background:linear-gradient(180deg,#060913 0%,#0c1427 35%,#161e38 65%,#26153b 88%,#1a0f2b 100%);box-shadow:inset 0 0 80px rgba(0,0,0,0.7),0 10px 30px rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.18)}
+.sky-moon{position:absolute;top:28px;right:40px;width:56px;height:56px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fffef0,#fef08a 60%,#f59e0b 100%);box-shadow:0 0 35px rgba(254,240,138,0.7),0 0 70px rgba(245,158,11,0.3);pointer-events:none}
+.sky-moon::after{content:'';position:absolute;top:-4px;right:6px;width:48px;height:48px;border-radius:50%;background:#080e1e;opacity:0.85}
+.sky-water{position:absolute;bottom:0;left:0;right:0;height:70px;background:linear-gradient(180deg,transparent,#0e0b1f99 40%,#090614 100%);pointer-events:none;border-bottom-left-radius:24px;border-bottom-right-radius:24px}
+.sky-star{position:absolute;width:2px;height:2px;background:#fff;border-radius:50%;animation:star-twinkle 2.5s infinite ease-in-out alternate;pointer-events:none}
+@keyframes star-twinkle{0%{opacity:.2;transform:scale(.8)}100%{opacity:1;transform:scale(1.4);box-shadow:0 0 6px #fff}}
+.fl{position:absolute;animation:drift var(--t) ease-in-out infinite alternate;cursor:pointer;background:none;border:none;padding:0;outline:none;display:flex;flex-direction:column;align-items:center;transition:transform .2s,filter .2s;z-index:5}
+.fl:hover{transform:scale(1.3) translate(var(--dx),var(--dy));filter:drop-shadow(0 0 16px #f4b942) drop-shadow(0 0 25px #ec4899);z-index:20}
+.fl.focus{transform:scale(1.35) translate(var(--dx),var(--dy));filter:drop-shadow(0 0 20px #f59e0b);z-index:25}
 @keyframes drift{to{transform:translate(var(--dx),var(--dy))}}
-.wish{list-style:none;padding:0;display:grid;gap:6px}.wish li{background:#ffffff12;border-radius:12px;padding:8px 12px}
+.fl-badge{background:rgba(15,23,42,0.85);color:#fef08a;border:1px solid #f59e0b88;border-radius:99px;padding:1px 6px;font-size:.65rem;font-weight:800;margin-top:2px;white-space:nowrap;backdrop-filter:blur(4px);box-shadow:0 2px 6px rgba(0,0,0,0.5)}
+.fl-badge.unlocked{color:#86efac;border-color:#22c55e88}
+
+/* Modal thiệp điều ước */
+.wish-modal-mask{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.65);backdrop-filter:blur(6px);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px}
+.wish-modal-card{background:linear-gradient(145deg,#1e1b4b,#0f172a);border:2px solid var(--lantern);border-radius:22px;padding:22px 20px;max-width:400px;width:100%;color:#fff;box-shadow:0 12px 36px rgba(0,0,0,0.7),0 0 30px rgba(244,185,66,0.25);animation:modal-pop .3s cubic-bezier(.34,1.56,.64,1);position:relative}
+@keyframes modal-pop{0%{opacity:0;transform:scale(0.8)}100%{opacity:1;transform:scale(1)}}
+.countdown-box{background:rgba(245,158,11,0.12);border:1px solid #f59e0b66;border-radius:14px;padding:12px;margin:12px 0;text-align:center}
+.countdown-digits{font-size:1.6rem;font-weight:900;color:#fef08a;letter-spacing:1px;font-family:monospace;text-shadow:0 0 10px rgba(245,158,11,0.6)}
+
+.wish{list-style:none;padding:0;display:grid;gap:8px}.wish li{background:#ffffff14;border:1px solid #ffffff1a;border-radius:14px;padding:10px 14px;cursor:pointer;transition:transform .15s,background .15s}.wish li:hover{background:#ffffff1f;transform:translateY(-2px)}
 .panel input[type=checkbox]{width:auto}
 .wheel{position:relative;width:min(100%,280px);aspect-ratio:1;margin:8px auto;border-radius:50%;background:#ffffff14}
 .tile{position:absolute;transform:translate(-50%,-50%);width:52px;height:52px;border-radius:50%;border:0;font:inherit;font-size:1.4rem;font-weight:800;background:var(--giay);color:var(--ink)}
