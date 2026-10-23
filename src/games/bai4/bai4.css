@@ -1,0 +1,45 @@
+.bai4 .main{padding:14px}
+.bai4 .opps{gap:6px}
+.bai4 .opp{font-size:.8rem;padding:5px 8px;flex-wrap:wrap}
+.bai4 .opp small{color:#fcd34d;font-weight:800}
+.bai4 .opp.b4-acted{background:#f4b94218}
+.b4-latest{display:flex;align-items:center;gap:12px;margin:14px 0 10px;padding:12px;border:1px solid #f4b94250;border-radius:14px;background:#f4b94212;min-height:76px}
+.b4-latest>.card{flex-shrink:0}
+.b4-latest small{color:#fcd34d;font-size:.72rem;font-weight:800}
+.b4-latest p{margin:4px 0 0;font-size:.88rem;line-height:1.5;overflow-wrap:anywhere}
+.b4-event-icon{font-size:1.7rem}
+.b4-context{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;font-size:.76rem;color:var(--mute)}
+.b4-context span{display:flex;align-items:center;gap:5px}
+.b4-context i,.b4-color i{width:13px;height:13px;border-radius:50%;border:1px solid #fff;display:inline-block;flex-shrink:0}
+.bai4 .center{margin:10px 0;padding:14px 8px;gap:38px}
+.b4-stack{display:grid;justify-items:center;gap:10px;max-width:45%}
+.b4-stack>span{font-size:.72rem;text-align:center;color:var(--mute)}
+.b4-hint{margin:8px 0 12px;padding:9px 12px;border-radius:10px;background:#ffffff09;font-size:.84rem;line-height:1.5}
+.b4-picker{display:grid;gap:8px;margin:10px 0;padding:12px;background:#a78bfa16;border:1px solid #a78bfa66;border-radius:12px;font-size:.87rem}
+.b4-picker>span{font-size:.76rem;color:var(--mute)}
+.b4-picker .row{flex-wrap:wrap}
+.b4-color{display:flex;align-items:center;gap:7px;padding:8px 10px;border:1px solid #ffffff40;border-radius:9px;color:var(--text);background:#ffffff0c;font:inherit;cursor:pointer}
+.b4-color i{background:var(--card-color)}
+.b4-uno{justify-content:center;flex-wrap:wrap}
+.bai4 .uno-call-btn,.bai4 .uno-catch-btn{font-size:.8rem;animation:none}
+.b4-hand-title{display:flex;justify-content:space-between;margin:14px 0 4px;font-size:.82rem}
+.b4-hand-title span{color:var(--mute)}
+.bai4 .hand{padding-top:16px;gap:8px;min-height:0}
+.bai4 .hc{position:relative;opacity:.65;margin-bottom:6px}
+.bai4 .hc.ok{opacity:1}
+.bai4 .hc.b4-drawn{margin-bottom:20px}
+.b4-drawn small{position:absolute;bottom:-19px;left:0;right:0;color:#fcd34d;font-size:.65rem;font-weight:800;white-space:nowrap}
+.b4-actions{flex-wrap:wrap;margin-top:12px;gap:8px}
+.b4-actions .btn{font-size:.83rem;padding:8px 12px}
+.b4-history{margin-top:16px;border-top:1px solid #ffffff20;padding-top:12px;font-size:.8rem}
+.b4-history summary{cursor:pointer;color:var(--mute);line-height:1.5}
+.b4-history ol{list-style:none;padding:0;margin:10px 0 0;max-height:320px;overflow:auto}
+.b4-history li{display:flex;gap:10px;padding:10px 4px;border-bottom:1px solid #ffffff12;line-height:1.5;overflow-wrap:anywhere}
+.b4-history li small{min-width:28px;color:#fcd34d}
+.b4-error{color:#fecaca;font-size:.82rem;line-height:1.5}
+.b4-error .btn{font-size:.78rem;margin-top:6px}
+.bai4 button:focus-visible{outline:3px solid #fcd34d;outline-offset:3px}
+.bai4 button:disabled{cursor:default}
+.bai4 .rules-sec p{margin:0;font-size:.86rem;line-height:1.6}
+@media(max-width:400px){.bai4 .main{padding:10px}.bai4 .bar{gap:8px}.bai4 .turn{font-size:.9rem}.bai4 .hand{gap:6px}.b4-latest{padding:10px;gap:9px}}
+@media(prefers-reduced-motion:reduce){.bai4 *{animation:none!important;transition:none!important}}

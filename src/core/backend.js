@@ -8,6 +8,11 @@ async function remote() {
   return { mode: 'firebase', uid: cred.user.uid,
     get: async p => (await db.get(r(p))).val(),
     set: (p, v) => db.set(r(p), v), update: (p, o) => db.update(r(p), o),
+    transact: async (p, fn) => {
+      await db.get(r(p));
+      const result = await db.runTransaction(r(p), fn, { applyLocally: false });
+      return { committed: result.committed, value: result.snapshot.val() };
+    },
     on: (p, cb) => db.onValue(r(p), s => cb(s.val())) };
 }
 
@@ -17,14 +22,40 @@ function local() {
   const read = () => { try { return JSON.parse(localStorage.getItem('sdb') || '{}'); } catch { return {}; } };
   const at = (t, p) => p.split('/').reduce((n, k) => n && n[k], t);
   const put = (t, p, v) => { const ks = p.split('/'), l = ks.pop(); let n = t; for (const k of ks) n = n[k] ??= {}; v == null ? delete n[l] : n[l] = v; };
-  const subs = new Set(), fire = () => { const t = read(); subs.forEach(s => s.cb(at(t, s.p) ?? null)); };
+  const subs = new Set(), fire = () => {
+    const t = read();
+    subs.forEach(s => {
+      const value = at(t, s.p) ?? null, encoded = JSON.stringify(value);
+      if (encoded !== s.last) { s.last = encoded; s.cb(value); }
+    });
+  };
   addEventListener('storage', e => e.key === 'sdb' && fire());
-  const write = fn => { const t = read(); fn(t); localStorage.setItem('sdb', JSON.stringify(t)); fire(); };
+  const write = fn => {
+    const run = () => {
+      const t = read(), result = fn(t);
+      localStorage.setItem('sdb', JSON.stringify(t)); fire();
+      return result;
+    };
+    // Serialize read/modify/write across tabs, including ordinary room updates.
+    return navigator.locks ? navigator.locks.request('babii-local-db', run) : Promise.resolve().then(run);
+  };
   return { mode: 'local', uid,
     get: async p => at(read(), p) ?? null,
     set: async (p, v) => write(t => put(t, p, v)),
     update: async (p, o) => write(t => { for (const k in o) put(t, p + '/' + k, o[k]); }),
-    on: (p, cb) => { const s = { p, cb }; subs.add(s); cb(at(read(), p) ?? null); return () => subs.delete(s); } };
+    transact: (p, fn) => {
+      if (!navigator.locks) return Promise.reject(new Error('Trình duyệt này chưa hỗ trợ đồng bộ an toàn giữa các tab. Hãy dùng trình duyệt mới qua HTTPS hoặc localhost.'));
+      return write(t => {
+        const current = at(t, p) ?? null, value = fn(current);
+        if (value === undefined) return { committed: false, value: current };
+        put(t, p, value);
+        return { committed: true, value };
+      });
+    },
+    on: (p, cb) => {
+      const value = at(read(), p) ?? null, s = { p, cb, last: JSON.stringify(value) };
+      subs.add(s); cb(value); return () => subs.delete(s);
+    } };
 }
 
 let b;
