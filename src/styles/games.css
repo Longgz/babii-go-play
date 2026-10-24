@@ -9,6 +9,11 @@
 .chips{display:flex;flex-wrap:wrap;gap:6px}.chip{background:#ffffff1c;border-radius:10px;padding:6px 10px}.chip small{color:var(--mute)}
 .poke{width:100%;font-size:2rem;padding:36px;border-radius:24px;border:0;background:linear-gradient(120deg,var(--son),#8f2a5b);color:#fff;font-weight:800}
 .poke:active,.poke.hit{transform:scale(.96);filter:brightness(1.3)}
+.oan-progress{list-style:none;padding:0;display:grid;gap:8px;font-size:.85rem}
+.oan-progress li{display:flex;justify-content:space-between;gap:12px;padding:8px 10px;background:#ffffff0d;border-radius:10px}
+.oan-progress span{color:var(--mute)}
+.oan-errors{color:#fecaca;font-size:.85rem;line-height:1.5;overflow-wrap:anywhere}
+.oan-game .pick:disabled{opacity:.5;cursor:default}
 .picks{display:flex;gap:10px}.pick{flex:1;font-size:2.2rem;padding:18px 0;border-radius:18px;border:1px solid #ffffff2a;background:#ffffff14;color:var(--text);text-align:center}
 .pick small{font-size:.8rem}
 .msg,.err{min-height:1.4em}.err{color:#ff9d92}
