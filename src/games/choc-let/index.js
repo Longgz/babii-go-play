@@ -1,293 +1,194 @@
 import { esc } from '../../core/ui.js';
-import { clack, tone } from '../../core/sound.js';
+import { tone } from '../../core/sound.js';
 import { avatarSVG } from '../../core/avatar.js';
+import { onChange } from '../../core/room.js';
+import { BODY_PARTS, partOf, stateOf, eventsOf, addPoke, enterVisit, acknowledge, historyFor, reactionQueue } from './logic.js';
 
-// Danh sách các điểm chọc trên cơ thể với tọa độ % tương đối trên toàn thân
-const BODY_PARTS = [
-  { id: 'head', name: 'Trán / Đầu', icon: '⭐', x: 50, y: 15, quote: 'Ui da! Cốc đầu tui hoài!', face: 4, soundTone: 680 },
-  { id: 'cheek_l', name: 'Má trái', icon: '🌸', x: 33, y: 26, quote: 'Má phúng phính của tui đó!', face: 3, soundTone: 540 },
-  { id: 'cheek_r', name: 'Má phải', icon: '🌸', x: 67, y: 26, quote: 'Đỏ hết cả má rồi nè!', face: 3, soundTone: 540 },
-  { id: 'nose', name: 'Mũi', icon: '👃', x: 50, y: 27, quote: 'Hắt xìiii! Dám búng mũi tui!', face: 4, soundTone: 600 },
-  { id: 'neck', name: 'Nách / Cổ', icon: '🪶', x: 32, y: 40, quote: 'Haha nhột quá tha cho tuiii!', face: 5, soundTone: 440 },
-  { id: 'belly', name: 'Eo / Bụng mỡ', icon: '🍩', x: 50, y: 52, quote: 'Véo mỡ bụng hả, đền mỡ lại đây!', face: 5, soundTone: 380 },
-  { id: 'hip', name: 'Hông / Mông', icon: '🍑', x: 50, y: 64, quote: 'Á biến thái quá nha! 😳', face: 3, soundTone: 320 },
-  { id: 'thigh', name: 'Đùi / Chân', icon: '🦵', x: 42, y: 78, quote: 'Nhột chân quá đi thôi!', face: 5, soundTone: 410 }
-];
+const clock = at => at ? new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(at) : 'trước đây';
 
 export default {
-  id: 'choc-let',
-  name: 'Chọc lét',
-  icon: '👉',
-  desc: 'Chọc các vị trí nhạy cảm trên người đối phương, xem đối phương phản ứng trực tiếp',
-  min: 2,
-  max: 5,
-  ready: true,
-  room: true,
+  id: 'choc-let', name: 'Chọc lét', icon: '👉',
+  desc: 'Xoa đầu, véo má, chọc lét và xem từng phản ứng của bạn bè',
+  min: 2, max: 5, ready: true, room: true,
   mount(el, ctx) {
-    const { room, me } = ctx;
-    let st = {};
-    let seen = 0;
-    let targetUid = null;
-    let myReaction = null; // { part, quote, at, face }
-    let myReactionTimer = null;
-    let oppPokeAnim = null; // { part, at }
+    const { room, me } = ctx, visitId = crypto.randomUUID(), enteredAt = Date.now();
+    let st = stateOf(null), alive = true, ready = false, initializing = false, stopWatch = () => {};
+    let targetUid = null, reaction = null, outgoing = null, sending = false, failedDraft = null;
+    let since = 0, previousAt = 0, receivedAtEntry = 0, entrySeq = 0, completedThrough = 0;
+    let savingReceipt = false, receiptError = '', sendError = '', initError = '', limit = 50;
+    let myKey = '', targetKey = '';
+    const q = s => el.querySelector(s), ps = () => room.players();
+    const nameOf = uid => ps().find(p => p.uid === uid)?.name || 'Người chơi';
+    const avatarOf = uid => ps().find(p => p.uid === uid)?.avatar || {};
+    const fromName = e => e.fromName || nameOf(e.from);
+    const toName = e => e.toName || nameOf(e.to);
 
-    el.innerHTML = `
-      <section>
-        <div class="bar">
-          <a class="bk" href="#/">Quay lại</a>
-          <div class="turn">Trò chơi Chọc Lét</div>
-        </div>
-        <h2>👉 Đấu Trường Chọc Lét</h2>
-        <div class="poke-content"></div>
-      </section>
-    `;
+    el.innerHTML = `<section class="choc-game">
+      <div class="bar"><a class="bk" href="#/">Quay lại</a><div class="turn">Chọc Lét</div></div>
+      <p class="poke-intro">Chọn một người bạn và vị trí tương tác. Mỗi lần chọc có một phản ứng riêng, kể cả lúc bạn vắng mặt.</p>
+      <div class="poke-errors" role="alert"></div>
+      <div class="poke-roster row"></div>
+      <div class="poke-arena"><div class="poke-stage poke-me"></div><div class="poke-stage poke-target"></div></div>
+      <p class="poke-queue-status" role="status" aria-live="polite"></p>
+      <div class="panel poke-history"></div>
+      <div class="panel poke-ranking"></div>
+    </section>`;
 
-    const q = s => el.querySelector(s);
-    const ps = () => room.players();
-    const nameOf = u => ps().find(p => p.uid === u)?.name || 'Đối phương';
-    const avatarOf = u => ps().find(p => p.uid === u)?.avatar || {};
+    function sound(part) {
+      tone(part.soundTone, .08, .12, 'triangle');
+      tone(part.soundTone * 1.25, .09, .12, 'sine', .09);
+      tone(part.soundTone * 1.5, .12, .12, 'triangle', .19);
+    }
+    const incomingQueue = reactionQueue({
+      start(event) {
+        if (!alive) return;
+        reaction = event; const part = partOf(event.partId);
+        sound(part); try { navigator.vibrate?.([40, 30, 60]); } catch {}
+        render();
+      },
+      complete(event) {
+        completedThrough = Math.max(completedThrough, event.seq);
+        reaction = null; void flushReceipt();
+      },
+      idle() { reaction = null; render(); },
+    });
+    const outgoingQueue = reactionQueue({
+      duration: 900,
+      start(event) { outgoing = event; sound(partOf(event.partId)); render(); },
+      idle() { outgoing = null; render(); },
+    });
 
-    // Hiệu ứng âm thanh cù lét tinh nghịch
-    function playTickleSound(baseTone = 440) {
-      clack();
-      tone(baseTone, 0.08, 0.15, 'triangle');
-      setTimeout(() => tone(baseTone * 1.25, 0.09, 0.18, 'sine'), 90);
-      setTimeout(() => tone(baseTone * 1.5, 0.12, 0.22, 'triangle'), 190);
+    async function flushReceipt() {
+      if (savingReceipt || !alive || completedThrough <= (st.receipts[me.uid] || 0)) return;
+      savingReceipt = true;
+      const through = completedThrough;
+      try {
+        const result = await room.transact('g/choc', raw => acknowledge(raw, me.uid, through));
+        if (!result.committed) throw new Error('Chưa lưu được trạng thái đã xem.');
+        // Do not depend on listener delivery order for receipt progress.
+        st.receipts[me.uid] = Math.max(st.receipts[me.uid] || 0, through);
+        receiptError = '';
+      } catch { receiptError = 'Chưa lưu được phản ứng đã xem. Thử lưu lại để tránh phát lại khi vào lần sau.'; }
+      finally {
+        savingReceipt = false; render();
+        if (!receiptError && completedThrough > through) void flushReceipt();
+      }
     }
 
-    // Thực hiện chọc vào 1 vị trí
-    function pokePart(part) {
-      if (!targetUid) return;
-      const targetPlayer = ps().find(p => p.uid === targetUid);
-      if (!targetPlayer) return;
+    async function sendPoke(draft) {
+      if (!ready || sending || !alive) return;
+      if (!ps().some(p => p.uid === draft.to && p.uid !== me.uid)) {
+        failedDraft = null; sendError = 'Người nhận không còn trong phòng.'; render(); return;
+      }
+      sending = true; sendError = ''; render();
+      try {
+        const result = await room.transact('g/choc', raw => addPoke(raw, draft));
+        if (!result.committed) throw new Error('Thao tác chưa được xác nhận.');
+        failedDraft = null;
+        if (alive) {
+          ctx.toast(`Đã ${partOf(draft.partId).name.toLowerCase()} ${draft.toName}.`);
+          ctx.ping([draft.to], `${me.name} vừa tương tác với bạn trong Chọc Lét.`);
+        }
+      } catch {
+        failedDraft = draft;
+        sendError = 'Chưa xác nhận được thao tác. Bấm Gửi lại để thử lại đúng thao tác này, không cộng trùng.';
+      } finally { sending = false; render(); }
+    }
 
-      playTickleSound(part.soundTone);
-      navigator.vibrate?.(40);
-
-      // Hiệu ứng chọc trên màn hình của mình
-      oppPokeAnim = { part, at: Date.now() };
-      render();
-      setTimeout(() => {
-        oppPokeAnim = null;
-        render();
-      }, 700);
-
-      const pokeData = {
-        from: me.uid,
-        to: targetUid,
-        partId: part.id,
-        partName: part.name,
-        quote: part.quote,
-        x: part.x,
-        y: part.y,
-        at: Date.now()
-      };
-
-      room.update({
-        'g/choc/last': pokeData,
-        [`g/choc/stats/${targetUid}/${part.id}`]: (st.stats?.[targetUid]?.[part.id] || 0) + 1,
-        [`g/choc/count/${me.uid}`]: (st.count?.[me.uid] || 0) + 1
-      });
-
-      ctx.ping([targetUid], `${me.name} vừa chọc vào ${part.name} của bạn!`);
-      ctx.toast(`👉 Bạn vừa chọc vào ${part.name} của ${targetPlayer.name}!`);
+    function reactionHTML(event, avatar) {
+      const part = event && partOf(event.partId);
+      return `<div class="poke-char-wrap ${part ? `poke-motion-${part.motion}` : ''}">
+        ${avatarSVG(avatar, 164, { crop: 'full', overrideFace: part?.face })}
+        ${part ? `<div class="poke-bubble">${esc(part.quote)}</div><div class="poke-ripple" style="left:${part.x}%;top:${part.y}%"></div><div class="poke-finger" style="left:${part.x}%;top:${part.y}%">${part.icon}</div>` : ''}
+      </div>`;
     }
 
     function render() {
-      const P = ps();
-      const opps = P.filter(p => p.uid !== me.uid);
+      if (!alive) return;
+      const players = ps(), opponents = players.filter(p => p.uid !== me.uid);
+      if (!opponents.some(p => p.uid === targetUid)) targetUid = opponents[0]?.uid || null;
+      const target = opponents.find(p => p.uid === targetUid);
+      q('.poke-errors').innerHTML = `${initError ? `<p>${esc(initError)} <button class="btn" data-a="retry-init">Kết nối lại</button></p>` : ''}
+        ${sendError ? `<p>${esc(sendError)}${failedDraft ? ` <button class="btn" data-a="retry-send" ${sending ? 'disabled' : ''}>Gửi lại</button><button class="btn" data-a="dismiss-send" ${sending ? 'disabled' : ''}>Đóng</button>` : ''}</p>` : ''}
+        ${receiptError ? `<p>${esc(receiptError)} <button class="btn" data-a="retry-receipt" ${savingReceipt ? 'disabled' : ''}>Lưu lại</button></p>` : ''}`;
+      q('.poke-roster').innerHTML = opponents.length > 1 ? `<span>Tương tác với:</span>${opponents.map(p => `<button class="btn ${targetUid === p.uid ? 'pri' : ''}" data-target="${esc(p.uid)}">${esc(p.name)}</button>`).join('')}` : '';
 
-      if (!opps.length) {
-        q('.poke-content').innerHTML = `
-          <div class="panel" style="text-align:center;padding:30px 16px">
-            <p style="font-size:1.1rem;color:var(--mute);margin-bottom:12px">Đang chờ bạn bè vào phòng để cùng chọc lét…</p>
-            <p style="font-size:0.88rem;color:#fcd34d">Gửi mã phòng <b>${room.code}</b> cho người yêu hoặc bạn bè nhé!</p>
-          </div>
-        `;
-        return;
+      const stats = st.stats[me.uid] || {};
+      const totals = BODY_PARTS.map(p => ({ part: p, count: Object.entries(stats).filter(([id]) => partOf(id)?.id === p.id).reduce((sum, [, n]) => sum + (Number(n) || 0), 0) }));
+      const most = totals.sort((a, b) => b.count - a.count)[0];
+      const nextMyKey = JSON.stringify([reaction?.id, avatarOf(me.uid), me.name, !reaction && stats]);
+      if (nextMyKey !== myKey) {
+        myKey = nextMyKey;
+        q('.poke-me').innerHTML = `<div class="poke-stage-title">Bạn · ${esc(me.name)}</div>
+          ${reactionHTML(reaction, avatarOf(me.uid))}
+          <p class="poke-reaction-caption" role="status" aria-live="polite">${reaction ? `${esc(fromName(reaction))} → ${esc(partOf(reaction.partId).name)} · ${clock(reaction.at)}` : most?.count ? `Hay bị ${esc(most.part.name.toLowerCase())} nhất · ${most.count} lần` : 'Chưa có ai chọc bạn.'}</p>`;
       }
-
-      // Mặc định chọn đối thủ đầu tiên nếu chưa chọn
-      if (!targetUid || !opps.some(p => p.uid === targetUid)) {
-        targetUid = opps[0].uid;
+      const targetReaction = outgoing?.to === targetUid ? outgoing : null;
+      const nextTargetKey = JSON.stringify([target, avatarOf(targetUid), targetReaction?.id, ready, sending, failedDraft?.id]);
+      if (nextTargetKey !== targetKey) {
+        targetKey = nextTargetKey;
+        q('.poke-target').innerHTML = !target ? `<p>Chờ bạn bè vào phòng.</p><p>Mã phòng: <b>${esc(room.code)}</b></p>` : `
+          <div class="poke-stage-title">${esc(target.name)} · Chạm để tương tác</div>
+          <div class="poke-char-wrap">
+            ${avatarSVG(avatarOf(targetUid), 164, { crop: 'full', overrideFace: targetReaction ? partOf(targetReaction.partId).face : undefined })}
+            ${BODY_PARTS.map(part => `<button class="poke-hotspot" data-part="${part.id}" style="left:${part.x}%;top:${part.y}%" aria-label="${part.name}" title="${part.name}${part.id === 'butt' ? ' (phía sau)' : ''}" ${!ready || sending || failedDraft ? 'disabled' : ''}>${part.icon}</button>`).join('')}
+            ${targetReaction ? `<div class="poke-bubble">${esc(partOf(targetReaction.partId).quote)}</div><div class="poke-finger" style="left:${partOf(targetReaction.partId).x}%;top:${partOf(targetReaction.partId).y}%">${partOf(targetReaction.partId).icon}</div>` : ''}
+          </div>
+          <p class="poke-help">Chạm điểm trên avatar hoặc chọn nút bên dưới. Điểm mông biểu thị phía sau.</p>
+          <div class="poke-part-grid">${BODY_PARTS.map(part => `<button class="btn-poke-part" data-part="${part.id}" ${!ready || sending || failedDraft ? 'disabled' : ''}><span>${part.icon}</span><b>${part.name}</b></button>`).join('')}</div>`;
       }
+      q('.poke-queue-status').textContent = !ready ? 'Đang tải các tương tác chưa xem…'
+        : incomingQueue.remaining ? `Đang phản ứng: ${reaction ? partOf(reaction.partId).name : ''} · Còn ${Math.max(0, incomingQueue.remaining - 1)} lượt tiếp theo. Mỗi thao tác được phát lần lượt.`
+        : 'Đã phát xong các phản ứng nhận được. Bạn có thể xem lại từng thao tác trong lịch sử.';
 
-      const curOpp = ps().find(p => p.uid === targetUid) || opps[0];
-      const myAvatarData = avatarOf(me.uid);
-      const oppAvatarData = avatarOf(targetUid);
+      const history = historyFor(st, me.uid, since, receivedAtEntry).reverse();
+      q('.poke-history').innerHTML = `<h3>Lịch sử tương tác · ${history.length}</h3>
+        <p class="poke-help">${previousAt ? `Từ lần bạn vào trước: ${clock(previousAt)}.` : 'Lần đầu vào: hiển thị các tương tác của bạn đã được lưu.'} Bao gồm gửi và nhận; các lượt chưa xem từ trước vẫn được giữ.</p>
+        ${history.length ? `<ol class="poke-history-list">${history.slice(0, limit).map(e => `<li><span class="poke-history-icon">${partOf(e.partId).icon}</span><div><b>${esc(fromName(e))}</b> ${esc(partOf(e.partId).name.toLowerCase())} <b>${e.to === me.uid ? 'bạn' : esc(toName(e))}</b><small>${clock(e.at)} · #${e.seq}${e.to === me.uid ? e.seq <= Math.max(st.receipts[me.uid] || 0, completedThrough) ? ' · Đã phản ứng' : reaction?.id === e.id ? ' · Đang phản ứng' : ' · Chờ phản ứng' : ' · Đã gửi'}</small></div></li>`).join('')}</ol>` : '<p>Chưa có tương tác trong khoảng này.</p>'}
+        ${history.length > limit ? `<button class="btn" data-a="more">Xem thêm ${Math.min(50, history.length - limit)} thao tác</button>` : ''}`;
+      q('.poke-ranking').innerHTML = `<h3>Số lần tương tác trong phòng</h3><ul class="tally">${players.map(p => `<li><span>${avatarSVG(p.avatar, 24)} ${esc(p.name)}</span><b>${Number(st.count[p.uid]) || 0}</b></li>`).join('')}</ul>`;
+    }
 
-      // Thống kê điểm yếu bị chọc nhiều nhất của mình
-      const myStats = st.stats?.[me.uid] || {};
-      let mostPokedMyPart = null;
-      let maxMyPokes = 0;
-      for (const part of BODY_PARTS) {
-        const count = myStats[part.id] || 0;
-        if (count > maxMyPokes) {
-          maxMyPokes = count;
-          mostPokedMyPart = part;
-        }
-      }
-
-      q('.poke-content').innerHTML = `
-        <!-- Chọn đối thủ muốn chọc (nếu phòng > 2 người) -->
-        ${opps.length > 1 ? `
-          <div class="row" style="margin-bottom:14px;gap:8px;overflow-x:auto;padding-bottom:4px">
-            <span style="font-size:0.85rem;color:var(--mute);align-self:center">Chọc ai:</span>
-            ${opps.map(p => `
-              <button class="btn ${p.uid === targetUid ? 'pri' : ''}" data-target-uid="${p.uid}" style="border-radius:99px;padding:4px 12px;font-size:0.84rem">
-                ${esc(p.name)}
-              </button>
-            `).join('')}
-          </div>
-        ` : ''}
-
-        <!-- Đấu trường 2 bên: Bạn bị chọc & Đối phương bị chọc -->
-        <div class="poke-arena">
-          
-          <!-- SÂN KHẤU CỦA BẠN (Xem mình bị chọc ở đâu) -->
-          <div class="poke-stage">
-            <div class="poke-stage-title">
-              <span>🛡️ Bạn (${esc(me.name)})</span>
-            </div>
-            
-            <div class="poke-char-wrap ${myReaction ? 'tickle-shake' : ''}">
-              ${avatarSVG(myAvatarData, 120, {
-                crop: 'full',
-                overrideFace: myReaction ? myReaction.face : undefined
-              })}
-
-              <!-- Bong bóng thoại phản ứng khi bị chọc -->
-              ${myReaction ? `
-                <div class="poke-bubble">${esc(myReaction.quote)}</div>
-                <!-- Sóng gợn đỏ tại vị trí bị chọc -->
-                <div class="poke-ripple" style="left:${myReaction.x}%;top:${myReaction.y}%"></div>
-                <!-- Bàn tay chọc bay vào -->
-                <div class="poke-finger" style="left:${myReaction.x}%;top:${myReaction.y}%">👉</div>
-              ` : ''}
-            </div>
-
-            <div style="font-size:0.85rem;color:${myReaction ? '#f87171' : 'var(--mute)'};min-height:24px;font-weight:700">
-              ${myReaction
-                ? `🚨 ${nameOf(st.last?.from)} vừa chọc vào [${st.last?.partName}]!`
-                : (mostPokedMyPart ? `Điểm yếu nhất: ${mostPokedMyPart.name} (${maxMyPokes} lần)` : 'Chưa bị ai chọc')}
-            </div>
-          </div>
-
-          <!-- SÂN KHẤU ĐỐI PHƯƠNG (Bấm trực tiếp lên người để chọc) -->
-          <div class="poke-stage" style="border-color:#f4b94244">
-            <div class="poke-stage-title" style="color:#fcd34d">
-              <span>🎯 ${esc(curOpp.name)} (Chạm để chọc!)</span>
-            </div>
-
-            <div class="poke-char-wrap" id="opp-char-wrap">
-              ${avatarSVG(oppAvatarData, 120, { crop: 'full' })}
-
-              <!-- Các điểm Hotspot tương tác trên cơ thể đối phương -->
-              ${BODY_PARTS.map(part => `
-                <button class="poke-hotspot" 
-                  data-part-id="${part.id}" 
-                  style="left:${part.x}%;top:${part.y}%" 
-                  title="${part.name}: ${part.desc}"
-                  aria-label="Chọc vào ${part.name}">
-                  ${part.icon}
-                </button>
-              `).join('')}
-
-              <!-- Hiệu ứng tay chọc bay tới đối phương -->
-              ${oppPokeAnim ? `
-                <div class="poke-ripple" style="left:${oppPokeAnim.part.x}%;top:${oppPokeAnim.part.y}%"></div>
-                <div class="poke-finger" style="left:${oppPokeAnim.part.x}%;top:${oppPokeAnim.part.y}%">👉</div>
-              ` : ''}
-            </div>
-
-            <p style="font-size:0.82rem;color:var(--mute);margin:4px 0 10px">
-              Chạm trực tiếp vào các điểm tròn trên cơ thể, hoặc chọn nhanh bên dưới:
-            </p>
-
-            <!-- Bảng nút chọn nhanh vị trí chọc -->
-            <div class="poke-part-grid">
-              ${BODY_PARTS.map(part => `
-                <button class="btn-poke-part" data-part-id="${part.id}">
-                  <span>${part.icon}</span>
-                  <b>${part.name}</b>
-                </button>
-              `).join('')}
-            </div>
-          </div>
-
-        </div>
-
-        <!-- Bảng xếp hạng số lần chọc trong phòng -->
-        <div class="panel" style="margin-top:16px">
-          <h4 style="margin:0 0 8px;font-size:0.92rem;color:var(--lantern)">🏆 Bảng phong thần Chọc Lét</h4>
-          <ul class="tally" style="list-style:none;padding:0;margin:0;display:grid;gap:6px">
-            ${P.map(p => `
-              <li style="display:flex;align-items:center;justify-content:space-between;background:#ffffff0d;padding:6px 12px;border-radius:10px;font-size:0.88rem">
-                <span style="display:flex;align-items:center;gap:8px">
-                  ${avatarSVG(p.avatar, 24)}
-                  <b>${esc(p.name)}${p.uid === me.uid ? ' (Bạn)' : ''}</b>
-                </span>
-                <span>Đã chọc: <b style="color:#fcd34d">${st.count?.[p.uid] || 0}</b> cái</span>
-              </li>
-            `).join('')}
-          </ul>
-        </div>
-      `;
+    async function initialize() {
+      if (initializing || !alive) return;
+      initializing = true; initError = ''; render();
+      try {
+        const result = await room.transact('g/choc', raw => enterVisit(raw, me.uid, visitId, enteredAt));
+        if (!result.committed) throw new Error('Không thể mở phiên chơi.');
+        if (!alive) return;
+        st = stateOf(result.value);
+        const visit = st.visits[me.uid];
+        since = visit.previousSeq; previousAt = visit.previousAt; entrySeq = visit.seq;
+        receivedAtEntry = st.receipts[me.uid] || 0; completedThrough = receivedAtEntry;
+        ready = true;
+        stopWatch = room.watch('g/choc', raw => {
+          if (!alive) return;
+          st = stateOf(raw);
+          const events = eventsOf(st);
+          incomingQueue.add(events.filter(e => e.to === me.uid && e.seq > Math.max(st.receipts[me.uid] || 0, completedThrough)));
+          outgoingQueue.add(events.filter(e => e.from === me.uid && e.seq > entrySeq));
+          render();
+        });
+      } catch (err) { initError = `Chưa tải được lịch sử. ${err.message}`; }
+      finally { initializing = false; render(); }
     }
 
     el.onclick = e => {
-      const b = e.target.closest('[data-part-id],[data-target-uid]');
-      if (!b) return;
-
-      if (b.dataset.targetUid) {
-        targetUid = b.dataset.targetUid;
-        return render();
-      }
-
-      if (b.dataset.partId) {
-        const part = BODY_PARTS.find(p => p.id === b.dataset.partId);
-        if (part) pokePart(part);
+      const button = e.target.closest('button');
+      if (!button || !el.contains(button) || button.disabled || !alive) return;
+      const { a, target, part } = button.dataset;
+      if (a === 'retry-init') return void initialize();
+      if (a === 'retry-receipt') return void flushReceipt();
+      if (a === 'retry-send' && failedDraft) return void sendPoke(failedDraft);
+      if (a === 'dismiss-send') { failedDraft = null; sendError = ''; render(); return; }
+      if (a === 'more') { limit += 50; render(); return; }
+      if (target) { targetUid = target; render(); return; }
+      if (part && partOf(part) && targetUid && ready && !sending && !failedDraft) {
+        void sendPoke({ id: crypto.randomUUID(), from: me.uid, fromName: me.name, to: targetUid, toName: nameOf(targetUid), partId: part, at: Date.now() });
       }
     };
-
-    // Lắng nghe dữ liệu realtime từ Firebase
-    ctx.onLeave(room.watch('g/choc', v => {
-      st = v || {};
-      const l = st.last;
-
-      // Xử lý khi có người chọc MÌNH
-      if (l && l.at > seen) {
-        seen = l.at;
-
-        if (l.to === me.uid && l.from !== me.uid) {
-          const part = BODY_PARTS.find(p => p.id === l.partId) || BODY_PARTS[0];
-
-          // Kích hoạt phản ứng biểu cảm và rung lắc
-          playTickleSound(part.soundTone);
-          navigator.vibrate?.([80, 40, 120]);
-
-          myReaction = {
-            part,
-            quote: l.quote || part.quote,
-            at: l.at,
-            face: part.face || 5,
-            x: l.x ?? part.x,
-            y: l.y ?? part.y
-          };
-
-          // Tự động tắt phản ứng sau 2.5 giây
-          clearTimeout(myReactionTimer);
-          myReactionTimer = setTimeout(() => {
-            myReaction = null;
-            render();
-          }, 2500);
-
-          ctx.toast(`💥 ${nameOf(l.from)} vừa chọc vào [${l.partName}] của bạn!`);
-        }
-      }
-
-      render();
-    }));
-  }
+    ctx.onLeave(() => { alive = false; stopWatch(); incomingQueue.stop(); outgoingQueue.stop(); el.onclick = null; });
+    ctx.onLeave(onChange(render));
+    render(); void initialize();
+  },
 };

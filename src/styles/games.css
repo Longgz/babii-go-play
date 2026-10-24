@@ -195,5 +195,33 @@ button.bc:not(:disabled){cursor:pointer}
 .btn-poke-part:hover{background:var(--lantern);color:#3a2300;border-color:var(--lantern);transform:translateY(-2px);box-shadow:0 4px 10px rgba(244,185,66,.35)}
 .btn-poke-part span{font-size:1.1rem}
 
+/* Tương tác tuần tự và lịch sử Chọc Lét */
+.choc-game .poke-arena{grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr))}
+.choc-game .poke-stage{padding:16px 10px}
+.choc-game .poke-char-wrap{margin-top:38px}
+.choc-game .poke-bubble{white-space:normal;width:220px;max-width:calc(100vw - 70px);font-size:.8rem;top:-30px;line-height:1.4}
+.choc-game .poke-hotspot{width:28px;height:28px;font-size:.8rem;animation:none}
+.choc-game button:disabled{opacity:.45;cursor:default;transform:none}
+.choc-game .poke-roster{flex-wrap:wrap;gap:8px;font-size:.85rem}
+.poke-intro,.poke-help,.poke-queue-status{font-size:.84rem;line-height:1.6;color:var(--mute)}
+.poke-reaction-caption{font-size:.85rem;line-height:1.5;min-height:42px;margin:0;overflow-wrap:anywhere}
+.poke-queue-status{padding:10px 12px;border-radius:12px;background:#f4b94214;color:#fcd34d}
+.poke-errors{color:#fecaca;font-size:.85rem;line-height:1.5}
+.poke-errors .btn{font-size:.8rem;margin:4px}
+.poke-history h3,.poke-ranking h3{font-size:1rem;margin:0 0 10px;color:var(--lantern)}
+.poke-history-list{list-style:none;padding:0;margin:12px 0;max-height:420px;overflow:auto}
+.poke-history-list li{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid #ffffff18;font-size:.84rem;line-height:1.5;overflow-wrap:anywhere}
+.poke-history-list small{display:block;color:var(--mute);margin-top:3px;font-size:.72rem}
+.poke-history-icon{flex:none;font-size:1.2rem}
+.poke-ranking .tally{list-style:none;padding:0;margin:0;display:grid;gap:8px}
+.poke-ranking li,.poke-ranking li>span{display:flex;align-items:center;gap:8px;font-size:.85rem}
+.poke-ranking li{justify-content:space-between}
+.poke-motion-tickle{animation:tickle-wobble .3s ease-in-out infinite alternate}
+.poke-motion-pinch{animation:poke-flinch .45s ease-in-out 3}
+.poke-motion-gentle{animation:poke-sway .8s ease-in-out 2}
+@keyframes poke-flinch{50%{transform:translateY(-5px) rotate(3deg)}}
+@keyframes poke-sway{50%{transform:rotate(-3deg) translateY(2px)}}
+@media(prefers-reduced-motion:reduce){.choc-game *{animation:none!important;transition:none!important}}
+
 
 
