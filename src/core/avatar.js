@@ -4,22 +4,28 @@ import { store } from './store.js';
 // Hỗ trợ: Nam / Nữ, Độ béo gầy, Áo quần đa dạng, Kiểu tóc, Biểu cảm và Phụ kiện.
 
 export const SKIN = ['#FFDFD3', '#F6D5B8', '#EFC29A', '#D9A477', '#B9805A', '#8A5A3C'];
-export const HAIRC = ['#1B1B1F', '#3D2314', '#663B1C', '#A05C2B', '#D8B45A', '#C0392B', '#8B5CF6', '#94A3B8'];
-export const TOPC = ['#E52521', '#F8B600', '#0066D6', '#2BA84A', '#EC4899', '#8B5CF6', '#1E293B', '#F8FAFC', '#F97316', '#14B8A6'];
-export const BOTC = ['#1E293B', '#2563EB', '#475569', '#0F172A', '#D97706', '#DB2777', '#F1F5F9', '#059669'];
+export const HAIRC = ['#1B1B1F', '#3D2314', '#663B1C', '#A05C2B', '#D8B45A', '#C0392B', '#8B5CF6', '#94A3B8', '#F9A8D4', '#67E8F9', '#F1F5F9', '#0F766E'];
+export const TOPC = ['#E52521', '#F8B600', '#0066D6', '#2BA84A', '#EC4899', '#8B5CF6', '#1E293B', '#F8FAFC', '#F97316', '#14B8A6', '#FDA4AF', '#C4B5FD', '#99F6E4', '#92400E'];
+export const BOTC = ['#1E293B', '#2563EB', '#475569', '#0F172A', '#D97706', '#DB2777', '#F1F5F9', '#059669', '#C4B5FD', '#FDA4AF', '#D6D3D1', '#713F12'];
 export const SHOESC = ['#FFFFFF', '#1E293B', '#DC2626', '#F59E0B', '#3B82F6', '#64748B'];
+export const ACCENTS = ['#F4B942', '#FB7185', '#A78BFA', '#22D3EE', '#6EE7B7', '#F8FAFC'];
+export const BACKDROPS = ['#1D2C58', '#4C1D59', '#134E4A', '#503923', '#312E81', '#334155'];
 
 export const OPT = {
   gender: ['Nam', 'Nữ'],
   weight: ['Gầy (Slim)', 'Cân đối (Fit)', 'Mũm mĩm (Chubby)'],
-  face: ['Cười nhẹ', 'Cười tươi', 'Nháy mắt', 'Đỏ mặt', 'Ngơ ngác', 'Cười nhe răng'],
-  hairM: ['Undercut', 'Mái rủ Hàn Quốc', 'Xoăn nhẹ', 'Đầu nấm', 'Vuốt dựng', 'Cột búi', 'Đầu đinh'],
-  hairF: ['Dài xoăn sóng', 'Bob ngắn', 'Đuôi ngựa', 'Buộc 2 chùm', 'Búi củ tỏi', 'Layer vai', 'Tóc tém'],
-  top: ['Áo thun', 'Sơ mi', 'Hoodie', 'Áo dài', 'Áo bà ba', 'Croptop / Đầm', 'Áo ba lỗ'],
-  bot: ['Quần jeans', 'Quần short', 'Quần jogger', 'Chân váy', 'Quần yếm'],
-  shoes: ['Sneaker', 'Sandal', 'Giày búp bê / da', 'Chân trần'],
-  hat: ['Không', 'Nón lá', 'Khăn rằn', 'Mũ lưỡi trai', 'Khăn đóng', 'Mũ len'],
-  acc: ['Không', 'Kính tròn', 'Kính râm', 'Kẹp hoa / nơ', 'Tai nghe', 'Khẩu trang']
+  face: ['Cười nhẹ', 'Cười tươi', 'Nháy mắt', 'Đỏ mặt', 'Ngơ ngác', 'Cười nhe răng', 'Mắt trái tim', 'Buồn ngủ', 'Quyết tâm', 'Mắt ngôi sao'],
+  hairM: ['Undercut', 'Mái rủ Hàn Quốc', 'Xoăn nhẹ', 'Đầu nấm', 'Vuốt dựng', 'Cột búi', 'Đầu đinh', 'Rẽ ngôi lệch', 'Tóc xù', 'Mullet'],
+  hairF: ['Dài xoăn sóng', 'Bob ngắn', 'Đuôi ngựa', 'Buộc 2 chùm', 'Búi củ tỏi', 'Layer vai', 'Tóc tém', 'Tết hai bên', 'Búi đôi', 'Xoăn bồng'],
+  top: ['Áo thun', 'Sơ mi', 'Hoodie', 'Áo dài', 'Áo bà ba', 'Croptop / Đầm', 'Áo ba lỗ', 'Áo varsity', 'Áo len', 'Áo thủy thủ'],
+  bot: ['Quần jeans', 'Quần short', 'Quần jogger', 'Chân váy', 'Quần yếm', 'Quần cargo', 'Váy xếp ly'],
+  shoes: ['Sneaker', 'Sandal', 'Giày búp bê / da', 'Chân trần', 'Boots', 'Giày cao cổ'],
+  hat: ['Không', 'Nón lá', 'Khăn rằn', 'Mũ lưỡi trai', 'Khăn đóng', 'Mũ len', 'Mũ beret', 'Mũ bucket', 'Băng đô tai mèo'],
+  acc: ['Không', 'Kính tròn', 'Kính râm', 'Kẹp hoa / nơ', 'Tai nghe', 'Khẩu trang', 'Kẹp ngôi sao', 'Khăn quàng', 'Khuyên tai'],
+  pattern: ['Trơn', 'Kẻ sọc', 'Ngôi sao', 'Trái tim'],
+  effect: ['Không', 'Lấp lánh', 'Trái tim bay', 'Quỹ đạo', 'Hoa giấy', 'Hào quang'],
+  motion: ['Đứng yên', 'Nhún nhẹ', 'Lơ lửng', 'Đung đưa'],
+  backdrop: ['Đêm xanh', 'Hồng mơ', 'Vườn bạc hà', 'Nắng mật ong', 'Tím vũ trụ', 'Xám sương'],
 };
 
 export const DEFAULT = {
@@ -35,31 +41,19 @@ export const DEFAULT = {
   botC: 0,
   shoes: 0,
   hat: 0,
-  acc: 0
+  acc: 0,
+  shoesC: 0, accentC: 0, pattern: 0, effect: 0, motion: 0, backdrop: 0,
 };
 
-export const LEN = {
-  gender: 2,
-  weight: 3,
-  skin: 6,
-  hair: 7,
-  hairC: 8,
-  face: 6,
-  top: 7,
-  topC: 10,
-  bot: 5,
-  botC: 8,
-  shoes: 4,
-  hat: 6,
-  acc: 6
-};
+export const LEN = Object.fromEntries(Object.keys(DEFAULT).map(k => [k, ({ skin: SKIN, hair: OPT.hairM, hairC: HAIRC, topC: TOPC, botC: BOTC, shoesC: SHOESC, accentC: ACCENTS })[k]?.length || OPT[k].length]));
 
 export const norm = raw => {
   const a = { ...DEFAULT };
   for (const k in LEN) {
-    const v = Math.floor(+raw?.[k]);
-    if (v >= 0 && v < LEN[k]) a[k] = v;
+    const input = raw?.[k], v = Number(input);
+    if ((typeof input === 'number' || typeof input === 'string' && input.trim() !== '') && Number.isInteger(v) && v >= 0 && v < LEN[k]) a[k] = v;
   }
+  if (raw?.shoesC == null && (a.shoes === 1 || a.shoes === 2)) a.shoesC = 1;
   return a;
 };
 
@@ -73,10 +67,10 @@ export function avatarInner(raw, opts = {}) {
   const hc = HAIRC[a.hairC];
   const tc = TOPC[a.topC];
   const bc = BOTC[a.botC];
-  const sc = SHOESC[a.shoes];
+  const sc = SHOESC[a.shoesC], accent = ACCENTS[a.accentC];
 
   // Cho phép ghi đè biểu cảm (ví dụ khi bị chọc lét)
-  const faceIdx = opts.overrideFace !== undefined ? opts.overrideFace : a.face;
+  const faceIdx = Number.isInteger(opts.overrideFace) && opts.overrideFace >= 0 && opts.overrideFace < LEN.face ? opts.overrideFace : a.face;
 
   // Tính toán kích thước theo độ béo gầy
   const bodyW = w === 0 ? 25 : w === 2 ? 34 : 29;
@@ -117,6 +111,10 @@ export function avatarInner(raw, opts = {}) {
     }
   }
 
+  if (isFemale && a.hair === 7) backHair = [27, 73].map(x => `<path d="M${x} 36 Q${x - 5} 52 ${x} 80" stroke="${hc}" stroke-width="8" fill="none"/><path d="M${x - 3} 48 l6 6 -6 6 6 6 -6 6" stroke="#ffffff33" stroke-width="1.5" fill="none"/><circle cx="${x}" cy="81" r="3" fill="${accent}"/>`).join('');
+  if (isFemale && a.hair === 8) backHair = `<circle cx="30" cy="19" r="10" fill="${hc}"/><circle cx="70" cy="19" r="10" fill="${hc}"/>`;
+  if (a.hair === 9) backHair = `<path d="M28 31 Q17 49 25 ${isFemale ? 88 : 65} Q50 96 75 ${isFemale ? 88 : 65} Q83 49 72 31 Z" fill="${hc}"/>`;
+
   // 2. CHÂN & QUẦN & GIÀY (Legs, Pants, Shoes)
   const legLeftX = 50 - legGap;
   const legRightX = 50 + legGap;
@@ -130,13 +128,14 @@ export function avatarInner(raw, opts = {}) {
     if (a.shoes === 1) {
       // Sandal
       return `
-        <ellipse cx="${x + (flip ? 2 : -2)}" cy="152" rx="${legThick * 0.6}" ry="3.5" fill="#334155"/>
+        <ellipse cx="${x + (flip ? 2 : -2)}" cy="152" rx="${legThick * 0.6}" ry="3.5" fill="${sc}"/>
         <path d="M${x - 3} 150 L${x + 3} 150 M${x - 2} 152 L${x + 4} 152" stroke="#e2e8f0" stroke-width="2"/>`;
     }
     if (a.shoes === 2) {
       // Giày búp bê / da
-      return `<path d="M${x - 5} 149 Q${x + (flip ? 7 : -7)} 148 ${x + (flip ? 6 : -6)} 153 L${x - 4} 153 Z" fill="#1e1b4b" stroke="#000" stroke-width="0.8"/>`;
+      return `<path d="M${x - 5} 149 Q${x + (flip ? 7 : -7)} 148 ${x + (flip ? 6 : -6)} 153 L${x - 4} 153 Z" fill="${sc}" stroke="#000" stroke-width="0.8"/>`;
     }
+    if (a.shoes >= 4) return `<path d="M${x - 5} ${a.shoes === 4 ? 137 : 143} h10 v7 l${flip ? 3 : -3} 4 h-12 Z" fill="${sc}" stroke="#334155" stroke-width=".8"/><path d="M${x - 3} 145 h6 m-6 3 h6" stroke="${accent}" stroke-width="1.5"/><rect x="${x - 7}" y="153" width="14" height="2" rx="1" fill="#e2e8f0"/>`;
     // Sneaker thể thao
     return `
       <path d="M${x - 5.5} 148 Q${x + (flip ? 7 : -7)} 147 ${x + (flip ? 6 : -6)} 153 L${x - 5} 153 Z" fill="${sc}" stroke="#334155" stroke-width="0.8"/>
@@ -195,6 +194,9 @@ export function avatarInner(raw, opts = {}) {
       <circle cx="${50 + bodyW / 2.5 - 5.2}" cy="82" r="1.6" fill="#facc15"/>
       <rect x="44" y="85" width="12" height="7" rx="1.5" fill="#00000022"/>`;
   }
+
+  if (a.bot === 5) bottomSVG = `<path d="M${50 - bodyW / 2} 94 H${50 + bodyW / 2} L${legRightX + legThick / 2 + 1} 148 H${legRightX - legThick / 2} L50 111 L${legLeftX + legThick / 2} 148 H${legLeftX - legThick / 2 - 1} Z" fill="${bc}" stroke="#0003"/>${[legLeftX, legRightX].map(x => `<rect x="${x - 5}" y="115" width="10" height="12" rx="2" fill="#fff2" stroke="#0003"/><path d="M${x - 5} 119 h10" stroke="${accent}"/>`).join('')}`;
+  if (a.bot === 6) bottomSVG = `${legSkin}<path d="M${50 - bodyW / 2} 94 H${50 + bodyW / 2} L73 136 Q50 142 27 136 Z" fill="${bc}"/>${[36, 43, 50, 57, 64].map(x => `<path d="M${50 + (x - 50) * .6} 97 L${x} 136" stroke="#ffffff55" stroke-width="1.5"/>`).join('')}`;
 
   // 3. THÂN NGƯỜI & ÁO (Torso & Tops)
   // Bụng mỡ đáng yêu khi chubby
@@ -273,10 +275,20 @@ export function avatarInner(raw, opts = {}) {
       <path d="M42 62 Q50 74 58 62 Z" fill="${sk}"/>`;
   }
 
+  if (a.top >= 7) {
+    topSVG = `<path d="M${50 - shoulderW / 2} 62 H${50 + shoulderW / 2} L${50 + bodyW / 2} 97 H${50 - bodyW / 2} Z" fill="${tc}"/>`;
+    if (a.top === 7) topSVG += `<path d="M44 62 L50 72 L56 62 M50 72 V97" stroke="#fff" stroke-width="2" fill="none"/><path d="M${50 - bodyW / 2} 94 H${50 + bodyW / 2}" stroke="${accent}" stroke-width="3"/><text x="58" y="80" font-size="8" text-anchor="middle" font-weight="bold" fill="${accent}">B</text>`;
+    if (a.top === 8) topSVG += `<rect x="43" y="59" width="14" height="8" rx="3" fill="${tc}" stroke="#ffffff66"/><path d="M40 72 l4 5 -4 5 4 5 M56 72 l4 5 -4 5 4 5" fill="none" stroke="#ffffff55" stroke-width="2"/>`;
+    if (a.top === 9) topSVG += `<path d="M38 62 L50 79 L62 62 L57 62 L50 72 L43 62 Z" fill="#f8fafc"/><path d="M50 75 l-6 10 6-3 6 3 Z" fill="${accent}"/>`;
+  }
+  const decoration = a.pattern === 1 ? `<path d="M41 79 h18 M41 85 h18 M41 91 h18" stroke="${accent}" stroke-width="2.5" opacity=".85"/>`
+    : a.pattern === 2 ? `<path d="M50 76 l2 5 5 .5 -4 3 1 5 -4-3 -4 3 1-5 -4-3 5-.5Z" fill="${accent}"/>`
+    : a.pattern === 3 ? `<path d="M50 89 C32 79 46 73 50 80 C54 73 68 79 50 89Z" fill="${accent}"/>` : '';
+
   // 4. TAY & CÁNH TAY (Arms & Hands)
   const leftArmX = 50 - shoulderW / 2 - armThick / 2 + 2;
   const rightArmX = 50 + shoulderW / 2 + armThick / 2 - 2;
-  const armSleeveLen = a.top === 6 ? 0 : (a.top === 2 || a.top === 3) ? 26 : 14;
+  const armSleeveLen = a.top === 6 ? 0 : (a.top === 2 || a.top === 3 || a.top === 7 || a.top === 8) ? 26 : 14;
 
   const armsSVG = `
     <!-- Tay trái -->
@@ -368,6 +380,11 @@ export function avatarInner(raw, opts = {}) {
       <path d="M69 40 Q72 44 69 46 Q67 44 69 40 Z" fill="#38bdf8"/>`;
   }
 
+  if (faceIdx === 6) eyesAndMouth = `${blush}${[42, 58].map(x => `<path d="M${x} 42 C${x - 13} 34 ${x - 3} 30 ${x} 35 C${x + 3} 30 ${x + 13} 34 ${x} 42 Z" fill="#e11d48"/>`).join('')}<path d="M45 47 Q50 52 55 47" stroke="#991b1b" stroke-width="2" fill="none"/>`;
+  if (faceIdx === 7) eyesAndMouth = `${blush}<path d="M37 39 Q42 43 47 39 M53 39 Q58 43 63 39" stroke="#1e293b" stroke-width="2" fill="none"/><ellipse cx="50" cy="48" rx="3" ry="2" fill="#991b1b"/>`;
+  if (faceIdx === 8) eyesAndMouth = `${blush}<path d="M37 33 l10 3 M53 36 l10-3" stroke="#1e293b" stroke-width="2"/><circle cx="42" cy="40" r="2.5" fill="#1e293b"/><circle cx="58" cy="40" r="2.5" fill="#1e293b"/><path d="M44 48 Q50 45 56 48" stroke="#991b1b" stroke-width="2" fill="none"/>`;
+  if (faceIdx === 9) eyesAndMouth = `${blush}${[42, 58].map(x => `<path d="M${x} 32 l2 4 4 1 -3 3 1 4 -4-2 -4 2 1-4 -3-3 4-1 Z" fill="#d97706"/>`).join('')}<path d="M44 46 Q50 55 56 46Z" fill="#991b1b"/>`;
+
   // 6. TÓC PHÍA TRƯỚC (Front hair & Bangs)
   let frontHair = '';
   if (isFemale) {
@@ -457,6 +474,13 @@ export function avatarInner(raw, opts = {}) {
     }
   }
 
+  if (a.hair >= 7) {
+    frontHair = `<path d="M28 36 Q24 14 50 14 Q76 14 72 36 Q61 25 50 25 Q39 25 28 36Z" fill="${hc}"/>`;
+    if (a.hair === 7) frontHair += `<path d="M60 18 Q42 38 30 33 L34 23 Z" fill="${hc}"/><path d="M52 19 Q40 23 34 28" stroke="#ffffff33" stroke-width="2" fill="none"/>`;
+    if (a.hair === 8) frontHair += isFemale ? `<path d="M35 25 L35 33 Q50 38 65 33 L65 25Z" fill="${hc}"/>` : `<path d="M28 27 l4-15 9 7 7-13 8 12 11-7 6 19 -12-4 -10 6 -11-6Z" fill="${hc}"/>`;
+    if (a.hair === 9) frontHair += [30, 40, 50, 60, 70].map((x, i) => `<circle cx="${x}" cy="${i % 2 ? 22 : 25}" r="7" fill="${hc}"/><path d="M${x - 3} 22 q3-3 6 0" stroke="#ffffff22" fill="none"/>`).join('');
+  }
+
   // 7. PHỤ KIỆN (Accessories)
   let accSVG = '';
   if (a.acc === 1) {
@@ -506,6 +530,10 @@ export function avatarInner(raw, opts = {}) {
       <path d="M48 48 Q50 50 52 48" stroke="#1e293b" stroke-width="1" fill="none"/>`;
   }
 
+  if (a.acc === 6) accSVG = `<path d="M68 19 l2 4 5 1 -4 3 1 5 -4-3 -4 3 1-5 -4-3 5-1Z" fill="${accent}" stroke="#fff" stroke-width=".8"/>`;
+  if (a.acc === 7) accSVG = `<path d="M38 57 Q50 67 62 57 L62 66 Q50 73 38 66Z" fill="${accent}"/><path d="M55 65 L63 65 L66 86 L57 83Z" fill="${accent}"/><path d="M57 77 l8 2" stroke="#fff8" stroke-width="2"/>`;
+  if (a.acc === 8) accSVG = [29, 71].map(x => `<circle cx="${x}" cy="46" r="3" fill="none" stroke="${accent}" stroke-width="2"/><circle cx="${x}" cy="43" r="1" fill="#fff"/>`).join('');
+
   // 8. MŨ & KHĂN (Hats)
   let hatSVG = '';
   if (a.hat === 1) {
@@ -544,15 +572,20 @@ export function avatarInner(raw, opts = {}) {
       <circle cx="50" cy="7" r="4.5" fill="#f8fafc"/>`;
   }
 
+  if (a.hat === 6) hatSVG = `<path d="M26 26 Q25 12 46 10 Q74 5 77 21 Q70 32 29 30Z" fill="${accent}"/><path d="M30 29 Q50 22 70 28" stroke="#0003" stroke-width="4" fill="none"/><path d="M51 10 l3-5" stroke="${accent}" stroke-width="3"/>`;
+  if (a.hat === 7) hatSVG = `<path d="M34 13 Q50 9 66 13 L70 29 H30 Z" fill="${accent}"/><path d="M30 26 L20 38 Q50 32 80 38 L70 26Z" fill="${accent}" stroke="#0003"/><path d="M33 23 H67" stroke="#fff9" stroke-width="2"/>`;
+  if (a.hat === 8) hatSVG = `<path d="M29 29 Q50 12 71 29" stroke="${accent}" stroke-width="4" fill="none"/><path d="M29 27 L28 8 L43 19 M57 19 L72 8 L71 27" fill="${accent}" stroke="#0003"/><path d="M32 21 L31 14 L38 19 M62 19 L69 14 L68 21" fill="#fda4af"/>`;
+
   // Kết hợp tất cả các lớp theo thứ tự chiều sâu
   return `
     ${backHair}
+    ${bottomSVG}
     ${renderShoes(legLeftX, false)}
     ${renderShoes(legRightX, true)}
-    ${bottomSVG}
     ${armsSVG}
     ${neckSVG}
     ${topSVG}
+    <g${a.top === 5 ? ' transform="translate(0,-8)"' : ''}>${decoration}</g>
     ${headSVG}
     ${eyesAndMouth}
     ${frontHair}
@@ -564,58 +597,65 @@ export function avatarInner(raw, opts = {}) {
 // Hàm xuất SVG hoàn chỉnh
 // w: chiều rộng hiển thị
 // opts: { crop: 'head' | 'full', overrideFace, animate }
+let avatarId = 0;
+function effectsSVG(a) {
+  const color = ACCENTS[a.accentC];
+  const points = [[16, 22], [83, 38], [12, 70], [87, 94], [19, 121], [79, 142]];
+  if (a.effect === 5) return `<ellipse class="av-aura" cx="50" cy="80" rx="44" ry="70" fill="${color}" opacity=".12"/><ellipse cx="50" cy="80" rx="40" ry="65" fill="none" stroke="${color}" opacity=".35"/>`;
+  if (a.effect === 3) return `<g class="av-orbit"><ellipse cx="50" cy="80" rx="43" ry="58" fill="none" stroke="${color}" stroke-width=".8" opacity=".55"/><circle cx="50" cy="22" r="3" fill="${color}"/><circle cx="50" cy="138" r="2" fill="${color}"/></g>`;
+  if (!a.effect) return '';
+  return points.map(([x, y], i) => `<g transform="translate(${x},${y})"><g class="av-particle av-particle-${a.effect}" style="animation-delay:-${i * .45}s">${a.effect === 1
+    ? `<path d="M0-5 L1.5-1.5 5 0 1.5 1.5 0 5 -1.5 1.5 -5 0 -1.5-1.5Z" fill="${color}"/>`
+    : a.effect === 2 ? `<path d="M0 4 C-12-3 -3-8 0-3 C3-8 12-3 0 4Z" fill="${color}"/>`
+    : `<rect x="-2" y="-3" width="4" height="6" rx="1" transform="rotate(${i * 35})" fill="${ACCENTS[i % ACCENTS.length]}"/>`}</g></g>`).join('');
+}
+
 export function avatarSVG(raw, w = 64, opts = {}) {
+  const a = norm(raw), staticClass = opts.animate === false || opts.overrideFace !== undefined ? ' av-static' : '';
   const isHeadOnly = opts.crop === 'head' || (opts.crop !== 'full' && w <= 36);
 
   if (isHeadOnly) {
     // Hiển thị khung tròn cận cảnh khuôn mặt (Headshot avatar badge)
     const h = w;
-    return `<svg class="avatar avatar-head" width="${w}" height="${h}" viewBox="22 10 56 56" role="img" aria-label="Avatar Chibi">
+    const clipId = `avatar-head-${++avatarId}`;
+    return `<svg class="avatar avatar-head${staticClass}" width="${w}" height="${h}" viewBox="22 10 56 56" role="img" aria-label="Avatar Chibi">
       <defs>
-        <clipPath id="headClip-${w}-${Math.random().toString(36).slice(2, 6)}">
+        <clipPath id="${clipId}">
           <circle cx="50" cy="38" r="28" />
         </clipPath>
       </defs>
-      <g clip-path="url(#headClip-${w})">
-        <circle cx="50" cy="38" r="28" fill="#ffffff12"/>
-        ${avatarInner(raw, opts)}
+      <g clip-path="url(#${clipId})">
+        <circle cx="50" cy="38" r="28" fill="${BACKDROPS[a.backdrop]}"/>
+        ${avatarInner(a, opts)}
       </g>
+      ${a.effect ? `<circle cx="50" cy="38" r="27" fill="none" stroke="${ACCENTS[a.accentC]}" stroke-width="1.5"/>` : ''}
     </svg>`;
   }
 
   // Hiển thị toàn thân nhân vật (viewBox 0 0 100 160)
   const h = Math.round(w * 1.6);
-  return `<svg class="avatar avatar-full" width="${w}" height="${h}" viewBox="0 0 100 160" role="img" aria-label="Avatar Toàn Thân">
-    ${avatarInner(raw, opts)}
+  return `<svg class="avatar avatar-full${staticClass}" width="${w}" height="${h}" viewBox="0 0 100 160" role="img" aria-label="Avatar Toàn Thân">
+    <g aria-hidden="true">${effectsSVG(a)}</g>
+    <g class="av-motion-${a.motion}">${avatarInner(a, opts)}</g>
   </svg>`;
 }
 
 export const getAvatar = () => norm(store.get('avatar', {}));
-export const setAvatar = a => store.set('avatar', norm(a));
-
-export const randomAvatar = () => {
-  const gender = Math.random() < 0.5 ? 0 : 1;
-  return {
-    gender,
-    weight: Math.random() * LEN.weight | 0,
-    skin: Math.random() * LEN.skin | 0,
-    hair: Math.random() * LEN.hair | 0,
-    hairC: Math.random() * LEN.hairC | 0,
-    face: Math.random() * LEN.face | 0,
-    top: Math.random() * LEN.top | 0,
-    topC: Math.random() * LEN.topC | 0,
-    bot: Math.random() * LEN.bot | 0,
-    botC: Math.random() * LEN.botC | 0,
-    shoes: Math.random() * LEN.shoes | 0,
-    hat: Math.random() * LEN.hat | 0,
-    acc: Math.random() * LEN.acc | 0
-  };
+export const setAvatar = a => {
+  const value = norm(a);
+  store.set('avatar', value);
+  return JSON.stringify(getAvatar()) === JSON.stringify(value);
 };
+
+export const randomAvatar = () => Object.fromEntries(Object.entries(LEN).map(([k, length]) => [k, Math.floor(Math.random() * length)]));
 
 export const encode = a => btoa(JSON.stringify(norm(a)));
 export function decode(s) {
   try {
-    return norm(JSON.parse(atob(s.trim())));
+    if (typeof s !== 'string' || s.length > 8192) return null;
+    const value = JSON.parse(atob(s.trim()));
+    if (!value || typeof value !== 'object' || Array.isArray(value) || !Object.keys(LEN).some(k => Object.hasOwn(value, k) && Number.isInteger(value[k]) && value[k] >= 0 && value[k] < LEN[k])) return null;
+    return norm(value);
   } catch {
     return null;
   }
