@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "test": "node --test src/core/*.test.js src/games/bai4/*.test.js src/games/choc-let/*.test.js src/games/oan-tu-ti/*.test.js",
+    "test": "node --test src/core/*.test.js src/games/bai4/*.test.js src/games/choc-let/*.test.js src/games/oan-tu-ti/*.test.js src/games/may-bay/*.test.js",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview"

@@ -1,0 +1,52 @@
+.plane-game .main{padding:16px}
+.plane-game h2{margin:5px 0 0;color:var(--text);font-size:1.15rem}
+.plane-game h3{font-size:.9rem;text-align:center;margin:16px 0 8px}
+.plane-heading{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.plane-eyebrow{font-size:.62rem;letter-spacing:.1em;color:#5eead4;font-weight:800}
+.plane-count{padding:8px 12px;border-radius:12px;background:#5eead416;color:#5eead4;font-size:1.1rem;white-space:nowrap}
+.plane-help{font-size:.77rem;color:var(--mute);line-height:1.6}
+.plane-chart{display:grid;grid-template-columns:20px minmax(0,1fr);grid-template-rows:20px auto;gap:3px;width:100%;max-width:410px;margin:12px auto}
+.plane-chart.compact{max-width:300px}
+.plane-columns{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));align-items:center;text-align:center;font-size:.65rem;color:var(--mute)}
+.plane-rows{display:grid;grid-template-rows:repeat(10,minmax(0,1fr));align-items:center;text-align:center;font-size:.65rem;color:var(--mute)}
+.plane-grid{position:relative;isolation:isolate;display:grid;grid-template-columns:repeat(10,minmax(0,1fr));aspect-ratio:1;border:1px solid #829bc24d;border-radius:10px;overflow:hidden;background:radial-gradient(ellipse at 50% 30%,#213c62,#101f3d)}
+.plane-overlay{position:absolute;inset:0;width:100%;height:100%;z-index:1;pointer-events:none}
+.plane-cell{display:flex;align-items:center;justify-content:center;position:relative;z-index:2;aspect-ratio:1;min-width:0;min-height:0;padding:0;border:0;border-right:1px solid #c3ddff20;border-bottom:1px solid #c3ddff20;background:transparent;color:#f8fafc;font:inherit;font-size:.75rem;line-height:1}
+button.plane-cell:not(:disabled){cursor:crosshair}
+button.plane-cell:not(:disabled):hover{background:#ffffff18;box-shadow:inset 0 0 0 2px #f4b942}
+button.plane-cell:focus-visible{outline:2px solid #f4b942;outline-offset:-3px}
+.plane-cell.preview-ok{background:#5eead416}
+.plane-cell.preview-bad{background:#fb718530}
+.plane-cell.m{color:#afbdd7;background:#ffffff06}
+.plane-cell.h{color:#ffdc81;background:#f59e0b33;font-size:.65rem}
+.plane-cell.k{color:#fff1f2;background:#e11d4890;font-size:1.1rem}
+.plane-cell.last-shot{box-shadow:inset 0 0 0 2px #f8fafc}
+.plane-placement-status{min-height:48px;display:flex;align-items:center;padding:8px 10px;background:#5eead40c;border:1px solid #5eead433;border-radius:10px;color:#b5f6e8;font-size:.8rem;line-height:1.5}
+.plane-placement-status.invalid{color:#fecdd3;background:#fb718514;border-color:#fb718550}
+.plane-tools{flex-wrap:wrap;gap:8px;margin:12px 0}
+.plane-tools .btn{font-size:.78rem;padding:8px 12px}
+.plane-game button:disabled{cursor:default}
+.plane-fleet{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:16px 0}
+.plane-fleet-item{display:flex;border:1px solid var(--plane-color);border-radius:12px;background:#ffffff08;overflow:hidden}
+.plane-fleet-item.selected{box-shadow:0 0 0 2px var(--plane-color);background:#ffffff18}
+.plane-fleet-item button{border:0;background:none;color:var(--text);font:inherit;padding:9px 6px;min-width:0}
+.plane-fleet-item button:first-child{flex:1;display:grid;gap:4px;text-align:left}
+.plane-fleet-item b{color:var(--plane-color);font-size:.85rem}
+.plane-fleet-item span{font-size:.68rem;line-height:1.4}
+.plane-fleet-item small{display:block;font-size:.57rem;color:var(--mute)}
+.plane-fleet-item button:last-child{font-size:1.1rem;align-self:start}
+.plane-fleet-empty{padding:10px;border:1px dashed #ffffff30;border-radius:12px;color:var(--mute);font-size:.8rem}
+.plane-fleet-empty small{display:block;font-size:.65rem;margin-top:7px}
+.plane-ready{width:100%;margin-top:4px}
+.plane-score{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:.8rem}
+.plane-score b{display:inline-block;color:#5eead4;margin-left:5px}
+.plane-last{padding:12px;border-radius:12px;background:#ffffff0c;font-size:.83rem;line-height:1.5}
+.plane-legend{display:flex;justify-content:center;gap:15px;flex-wrap:wrap;color:var(--mute);font-size:.7rem;margin:12px 0}
+.plane-legend span:nth-child(2){color:#fcd34d}.plane-legend span:nth-child(3){color:#fda4af}
+.plane-own{border-top:1px solid #ffffff20;padding-top:12px;margin-top:16px;font-size:.8rem}
+.plane-own summary{cursor:pointer;color:var(--mute)}
+.plane-errors{font-size:.8rem;color:#fecdd3;line-height:1.5;margin:10px 0}
+.plane-errors .btn{font-size:.75rem;margin:6px}
+.plane-game .rules-content{font-size:.84rem;line-height:1.6}
+.plane-game .rules-content p{margin:0}
+@media(max-width:380px){.plane-game .main{padding:10px}.plane-fleet{gap:5px}.plane-cell{font-size:.65rem}.plane-game h2{font-size:1rem}.plane-tools .btn{font-size:.72rem;padding:8px}.plane-chart{grid-template-columns:16px minmax(0,1fr)}}

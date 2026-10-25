@@ -1,3 +1,5 @@
+@import '../games/may-bay/may-bay.css';
+
 .panel{background:#ffffff12;border-radius:16px;padding:14px;margin:12px 0;display:grid;gap:10px}
 .panel input{background:#ffffff1a;border:1px solid #ffffff2a;border-radius:10px;color:var(--text);font:inherit;padding:10px;width:100%}
 .btn{background:#ffffff1c;border:1px solid #ffffff2a;color:var(--text);border-radius:12px;padding:10px 14px;font-weight:600}
