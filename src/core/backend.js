@@ -13,7 +13,7 @@ async function remote() {
       const result = await db.runTransaction(r(p), fn, { applyLocally: false });
       return { committed: result.committed, value: result.snapshot.val() };
     },
-    on: (p, cb) => db.onValue(r(p), s => cb(s.val())) };
+    on: (p, cb, onError) => db.onValue(r(p), s => cb(s.val()), onError) };
 }
 
 // Chế độ thử: dữ liệu trong localStorage, đồng bộ giữa các tab. Mỗi tab là một người chơi.

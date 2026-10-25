@@ -22,7 +22,7 @@ async function enter(code, create) {
   members = (await b.get(base + '/members')) || {};
   stop(); stop = b.on(base + '/members', m => { members = m || {}; emit(); });
   // room.watch/set/update dùng đường dẫn tương đối trong phòng, ví dụ 'g/caro'
-  cur = { code, watch: (s, cb) => b.on(`${base}/${s}`, cb), get: s => b.get(`${base}/${s}`), transact: (s, fn) => b.transact(`${base}/${s}`, fn), set: (s, v) => b.set(`${base}/${s}`, v), update: o => b.update(base, o), players: () => order(members) };
+  cur = { code, watch: (s, cb, onError) => b.on(`${base}/${s}`, cb, onError), get: s => b.get(`${base}/${s}`), transact: (s, fn) => b.transact(`${base}/${s}`, fn), set: (s, v) => b.set(`${base}/${s}`, v), update: o => b.update(base, o), players: () => order(members) };
   store.set('room', code); emit();
 }
 export async function init() {

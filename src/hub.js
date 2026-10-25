@@ -4,10 +4,11 @@ import { session, createRoom, joinRoom, leaveRoom, rename, onChange, setNotify }
 import { notifyCfg } from './core/notify.js';
 import { esc } from './core/ui.js';
 import { avatarSVG, getAvatar } from './core/avatar.js';
+import { ACTIVITY_PATH, gameVisitors } from './core/room-social.js';
 
 const item = (g, inRoom) => {
   const on = g.ready && (!g.room || inRoom), tag = on ? 'Chơi ngay' : g.ready ? 'Vào phòng trước' : 'Sắp ra mắt';
-  const body = `<span class="ic">${g.icon}</span><div><b>${g.name}</b><span>${g.desc}</span></div><span class="tag">${tag}</span>`;
+  const body = `<span class="ic">${g.icon}</span><div><b>${g.name}</b><span>${g.desc}</span>${inRoom && g.ready ? `<small class="game-visitors" data-game-activity="${g.id}" hidden></small>` : ''}</div><span class="tag">${tag}</span>`;
   return `<li>${on ? `<a class="g on" href="#/${g.id}">${body}</a>` : `<button class="g" disabled>${body}</button>`}</li>`;
 };
 
@@ -20,8 +21,20 @@ export function renderHub(el, ctx) {
       <h1 class="brand">Babii chơii đii<small>Trò chơi nhỏ cho 2-5 người</small></h1>
     </div><div id="dyn"></div></section>`;
   const dyn = el.querySelector('#dyn');
+  let watchedRoom = null, activity = null, stopActivity = () => {};
+  const drawActivity = () => {
+    dyn.querySelectorAll('[data-game-activity]').forEach(node => {
+      const visitors = gameVisitors(activity, node.dataset.gameActivity, watchedRoom?.players() || []);
+      node.hidden = !visitors.length;
+      node.textContent = visitors.length ? `${visitors.join(', ')} đã vào chơi` : '';
+    });
+  };
   const draw = () => {
     const r = session.room, ps = r ? r.players() : [];
+    if (r !== watchedRoom) {
+      stopActivity(); watchedRoom = r; activity = null;
+      stopActivity = r ? r.watch(ACTIVITY_PATH, state => { activity = state; drawActivity(); }, () => { activity = null; drawActivity(); }) : () => {};
+    }
     dyn.innerHTML = `<div class="pl"><label><span class="dot d1"></span><input data-k="0" maxlength="14" aria-label="Tên của bạn" value="${esc(names[0])}"></label>${r ? '' : `<label><span class="dot d2"></span><input data-k="1" maxlength="14" aria-label="Tên người chơi 2 (chung máy)" value="${esc(names[1])}"></label>`}</div>
     <div class="panel">${r
       ? `<div class="row"><span>Phòng</span><span class="code">${r.code}</span></div><div class="chips">${ps.map(p => `<span class="chip">${avatarSVG(p.avatar, 26)} ${esc(p.name)}${p.uid === session.me.uid ? ' (bạn)' : ''}</span>`).join('')}</div><button class="btn" data-a="leave">Rời phòng</button>`
@@ -29,6 +42,7 @@ export function renderHub(el, ctx) {
     <a class="panel row avrow" href="#/avatar">${avatarSVG(getAvatar(), 56)}<span><b>Avatar của bạn</b><br><small>Chạm để chọn áo dài, nón lá, tóc, phụ kiện...</small></span></a>
     <details class="panel"><summary>Thông báo "đến lượt bạn"</summary><label><input type="checkbox" data-n="on" ${notifyCfg.on ? 'checked' : ''}> Nhận thông báo qua ntfy</label><small>Cài app ntfy (Android, iPhone), bấm dấu +, nhập chủ đề riêng của bạn: <b>${notifyCfg.topic}</b>. Chủ đề này như mật khẩu, đừng chia sẻ. Thông báo do máy của người kia gửi khi họ vừa chơi xong.</small><a href="https://ntfy.sh/${notifyCfg.topic}" target="_blank" rel="noopener">Xem thông báo trên web</a></details>
     <h2>Chọn trò chơi</h2><ul class="gl">${games.map(g => item(g, !!r)).join('')}</ul>`;
+    drawActivity();
   };
   dyn.onchange = e => {
     if (e.target.dataset.n === 'on') return setNotify(e.target.checked);
@@ -40,5 +54,5 @@ export function renderHub(el, ctx) {
     try { if (a === 'new') await createRoom(); if (a === 'join') await joinRoom(dyn.querySelector('#code').value); if (a === 'leave') leaveRoom(); }
     catch (err) { const m = dyn.querySelector('.err'); if (m) m.textContent = err.message; }
   };
-  ctx.onLeave(onChange(draw)); draw();
+  ctx.onLeave(onChange(draw)); ctx.onLeave(() => stopActivity()); draw();
 }

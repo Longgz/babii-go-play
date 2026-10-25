@@ -1,0 +1,36 @@
+body.has-room{padding-bottom:calc(82px + env(safe-area-inset-bottom,0px))}
+.room-social{position:fixed;right:max(14px,env(safe-area-inset-right,0px));bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:80;font-size:.85rem}
+.room-launcher{display:flex;align-items:center;gap:9px;margin-left:auto;padding:12px 17px;border:1px solid #ffe0a070;border-radius:99px;background:#f4b942;color:#302009;box-shadow:0 5px 25px #0005;font-weight:800}
+.room-unread{background:#9f2445;color:white;border-radius:99px;padding:3px 7px;min-width:24px;font-size:.7rem}
+.room-drawer{position:absolute;right:0;bottom:58px;width:min(390px,calc(100vw - 28px));height:min(600px,calc(100dvh - 110px - env(safe-area-inset-bottom,0px)));display:flex;flex-direction:column;background:#182440;border:1px solid #67779c;border-radius:20px;box-shadow:0 16px 60px #0008;overflow:hidden}
+.room-drawer header{display:flex;justify-content:space-between;align-items:center;padding:15px 16px;background:#ffffff06}
+.room-drawer header b{font-size:1rem}.room-drawer header small{display:block;color:var(--mute);font-size:.72rem;margin-top:4px}
+.room-close{border:0;background:#ffffff0c;color:var(--text);border-radius:50%;width:36px;height:36px;font-size:1.4rem}
+.room-tabs{display:flex;gap:6px;padding:0 12px 10px;border-bottom:1px solid #ffffff15}
+.room-tabs button{flex:1;border:0;padding:10px 6px;border-radius:10px;background:none;color:var(--mute);font-weight:600;font-size:.8rem}
+.room-tabs button[aria-selected=true]{background:#f4b94222;color:#ffe0a0}
+.room-chat-view{display:flex;flex-direction:column;flex:1;min-height:0}
+.room-chat-scroll,.room-activity-view{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:14px;scrollbar-width:thin}
+.room-messages,.room-activities{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
+.room-message{align-self:flex-start;max-width:94%;padding:10px 12px;border-radius:13px 13px 13px 3px;background:#ffffff0b;border:1px solid #ffffff0c;overflow-wrap:anywhere}
+.room-message.mine{align-self:flex-end;border-radius:13px 13px 3px 13px;background:#3c3554;border-color:#f4b94225}
+.room-message-meta{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;font-size:.72rem;color:#e8d5aa}
+.room-message time,.room-activities time{font-size:.64rem;color:var(--mute)}
+.room-message small{display:block;font-size:.63rem;color:var(--mute);margin-top:4px}
+.room-message p{margin:7px 0 0;white-space:pre-wrap;line-height:1.6;font-size:.84rem}
+.room-chat-empty,.room-activity-empty{color:var(--mute);line-height:1.7;text-align:center;margin:25px 12px;font-size:.8rem}
+.room-compose{border-top:1px solid #ffffff15;padding:10px 12px;background:#121c32}
+.room-context{display:block;color:var(--mute);font-size:.67rem;margin-bottom:7px}
+.room-compose textarea{resize:none;width:100%;border:1px solid #697a9e80;border-radius:10px;background:#ffffff08;color:var(--text);padding:10px;font:inherit;font-size:16px;line-height:1.4;max-height:90px}
+.room-compose>div{display:flex;gap:8px;align-items:center;justify-content:space-between;margin-top:7px}
+.room-compose small{font-size:.6rem;color:var(--mute);line-height:1.5}.room-compose .btn{padding:8px 15px;font-size:.78rem;white-space:nowrap}
+.room-compose button:disabled{opacity:.5;cursor:default}
+.room-error{color:#fecdd3;font-size:.74rem;line-height:1.5;margin:0;padding:0 12px;overflow-wrap:anywhere}.room-error:not(:empty){padding-top:8px;padding-bottom:8px}
+.room-recovery{display:flex;gap:8px;flex-wrap:wrap;padding:8px 12px}.room-recovery .btn{font-size:.72rem;padding:6px 10px}
+.room-jump{align-self:center;border:0;border-radius:99px;padding:6px 12px;margin:4px;background:#f4b942;color:#302009;font-size:.75rem}
+.room-activities li{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid #ffffff10;line-height:1.6;overflow-wrap:anywhere}
+.room-activity-dot{display:grid;place-items:center;flex:none;width:28px;height:28px;border-radius:9px;background:#5eead414;color:#5eead4}
+.room-activities a{color:#ffe0a0;text-decoration:none}.room-activities a:hover{text-decoration:underline}.room-activities time{display:block;margin-top:4px}
+.room-announcement{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+.game-visitors{display:block;color:#a7f3d0!important;font-size:.7rem!important;line-height:1.5;margin-top:7px;white-space:normal;overflow-wrap:anywhere}
+@media(max-height:500px){.room-drawer{bottom:0;height:calc(100dvh - 28px)}.room-drawer header{padding:8px 12px}.room-tabs{padding-bottom:5px}.room-compose textarea{max-height:54px}}
