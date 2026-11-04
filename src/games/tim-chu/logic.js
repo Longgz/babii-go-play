@@ -13,11 +13,11 @@ export function prepareLevels(raw) {
   return raw.map(level => {
     const l = String(level.l || '').toUpperCase();
     if (!/^[A-Z]{4,6}$/.test(l)) throw new Error('Bộ chữ cần 4–6 chữ cái.');
-    const w = [...new Set(values(level.w))], t = values(level.t), h = level.h || {};
+    const w = [...new Set(values(level.w))], t = values(level.t);
     if (w.some(word => typeof word !== 'string' || !/^[a-z]{3,6}$/.test(word) || !canSpell(l, word))) throw new Error('Bộ từ không hợp lệ.');
-    if (t.length < 4 || t.length > 6 || new Set(t).size !== t.length || t.some(word => !w.includes(word) || typeof h[word] !== 'string' || !h[word].trim())) throw new Error('Cần 4–6 từ mục tiêu kèm gợi ý.');
+    if (t.length < 4 || t.length > 6 || new Set(t).size !== t.length || t.some(word => !w.includes(word))) throw new Error('Cần 4–6 từ mục tiêu hợp lệ.');
     if (w.length - t.length > BONUS_LIMIT || !buildCrossword(t)) throw new Error('Bộ từ không vừa bảng 9×9 hoặc có quá nhiều từ thưởng.');
-    return { l, w, t, h };
+    return { l, w, t };
   });
 }
 export function shuffle(items, random = Math.random) {
@@ -29,6 +29,47 @@ export function shuffle(items, random = Math.random) {
 export function seeded(seed) {
   let n = seed >>> 0;
   return () => { n = (Math.imul(n, 1664525) + 1013904223) >>> 0; return n / 4294967296; };
+}
+
+export const cellKey = (r, c) => `${r},${c}`;
+export function letterHints(state, cw = buildCrossword(state.targets)) {
+  // The match/round seed is shared by everyone and survives reconnects. Found words
+  // and wheel shuffles must never reroll clues and leak additional letters.
+  let seed = 2166136261;
+  for (const char of `${state.id}:${state.round}:${[...state.targets].sort().join('|')}`) seed = Math.imul(seed ^ char.charCodeAt(0), 16777619) >>> 0;
+  const candidates = shuffle(cw.cells, seeded(seed));
+  const limits = new Map(cw.placed.map(p => [p.word, Math.floor(p.word.length / 3)]));
+  const counts = new Map(cw.placed.map(p => [p.word, 0]));
+  const selected = new Set();
+  const allowed = cell => !selected.has(cellKey(cell.r, cell.c)) && cell.words.every(w => counts.get(w) < limits.get(w));
+  // Cover each word at least once without revealing too much at intersections.
+  function cover() {
+    const missing = cw.placed.filter(p => counts.get(p.word) === 0);
+    if (!missing.length) return true;
+    const options = missing.map(p => candidates.filter(cell => cell.words.includes(p.word) && allowed(cell))).sort((a, b) => a.length - b.length)[0];
+    for (const cell of options) {
+      const k = cellKey(cell.r, cell.c); selected.add(k);
+      cell.words.forEach(w => counts.set(w, counts.get(w) + 1));
+      if (cover()) return true;
+      selected.delete(k); cell.words.forEach(w => counts.set(w, counts.get(w) - 1));
+    }
+    return false;
+  }
+  cover();
+  // Six-letter words can have a second given, only if crossing words keep their cap.
+  for (const p of cw.placed.filter(p => p.word.length === 6)) {
+    if (counts.get(p.word) >= 2) continue;
+    const cell = candidates.find(cell => cell.words.includes(p.word) && allowed(cell));
+    if (cell) { selected.add(cellKey(cell.r, cell.c)); cell.words.forEach(w => counts.set(w, counts.get(w) + 1)); }
+  }
+  return selected;
+}
+export function visibleLetters(state, cw = buildCrossword(state.targets), hints = letterHints(state, cw)) {
+  const found = new Set(state.found.filter(f => !f.skip).map(f => f.word));
+  return new Map(cw.cells.filter(cell => hints.has(cellKey(cell.r, cell.c)) || cell.words.some(w => found.has(w))).map(cell => [cellKey(cell.r, cell.c), cell.letter.toUpperCase()]));
+}
+export function wordPattern(placed, visible) {
+  return [...placed.word].map((_, i) => visible.get(cellKey(placed.r + (placed.dir === 'V' ? i : 0), placed.c + (placed.dir === 'H' ? i : 0))) || '_').join(' ');
 }
 export function drawPuzzle(levels, previous = null, random = Math.random) {
   let used = [...new Set(Object.values(previous?.used || {}).filter(i => Number.isInteger(i) && i >= 0 && i < levels.length))];

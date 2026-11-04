@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { store } from '../../core/store.js';
-import { PATH, SOLO_KEY, SCHEMA, CATALOG, prepareLevels, canSpell, seeded, drawPuzzle, normalize, newGame, completed, currentPlayer, move, commitMove } from './logic.js';
+import { PATH, SOLO_KEY, SCHEMA, CATALOG, prepareLevels, canSpell, seeded, drawPuzzle, normalize, newGame, completed, currentPlayer, move, commitMove, cellKey, letterHints, visibleLetters, wordPattern } from './logic.js';
 import { buildCrossword, MAX_GRID } from './crossword.js';
 import { PACKS } from './packs.js';
 import game from './index.js';
@@ -64,7 +64,6 @@ test('letter multiplicity and malformed dictionary entries cannot create impossi
   assert.equal(canSpell('AABC', 'aba'), true);
   assert.throws(() => prepareLevels([{ ...source[0], w: [...source[0].w, 'tact'] }]));
   assert.throws(() => prepareLevels([{ ...source[0], t: ['plant'] }]));
-  assert.throws(() => prepareLevels([{ ...source[0], h: {} }]));
   assert.throws(() => prepareLevels([{ ...source[0], w: [...source[0].w, 'tan'] }]));
   assert.throws(() => prepareLevels([]));
 });
@@ -180,6 +179,7 @@ test('solo mounts without a room, saves a word and restores progress after reope
   await until(() => first.main().includes('data-a="go"'));
   const initial = store.get(SOLO_KEY);
   first.choose(initial.targets[0], levels[initial.level].l);
+  const boardBefore = first.main().match(/<div class="crossword-board"[\s\S]*?<div class="cur"/)[0];
   assert.equal(store.get(SOLO_KEY).found.length, 1);
   assert.doesNotMatch(first.main(), /data-a="skip"/);
   first.leave();
@@ -187,6 +187,7 @@ test('solo mounts without a room, saves a word and restores progress after reope
   await until(() => reopened.main().includes('data-a="go"'));
   assert.equal(store.get(SOLO_KEY).id, initial.id);
   assert.match(reopened.main(), /Đã tìm 1\//);
+  assert.equal(reopened.main().match(/<div class="crossword-board"[\s\S]*?<div class="cur"/)[0], boardBefore);
 });
 
 test('switching between solo and room keeps both games independent', async t => {
@@ -222,7 +223,7 @@ test('the curated catalog loads offline without requesting an external dictionar
   fixtures(t);
   const fetch = t.mock.method(globalThis, 'fetch', () => { throw new Error('offline'); });
   const ui = mounted(); t.after(() => ui.leave());
-  assert.match(ui.main(), /Gợi ý 5 từ|Gợi ý 4 từ/);
+  assert.match(ui.main(), /[45] từ cần tìm/);
   assert.equal(fetch.mock.callCount(), 0);
 });
 
@@ -236,7 +237,7 @@ test('every curated grid is compact, connected, and gives each target a distinct
     assert.equal(cw.placed.length, L.t.length);
     const occupied = new Map();
     for (const p of cw.placed) {
-      assert.ok(L.h[p.word]); assert.ok(p.word.length <= 6); assert.ok(p.number >= 1);
+      assert.ok(p.word.length <= 6); assert.ok(p.number >= 1);
       for (let i = 0; i < p.word.length; i++) {
         const r = p.r + (p.dir === 'V' ? i : 0), c = p.c + (p.dir === 'H' ? i : 0), k = `${r},${c}`;
         const cell = cw.cells.find(cell => cell.r === r && cell.c === c);
@@ -288,4 +289,59 @@ test('saved version-two solo and room games upgrade once and retain earned point
   assert.deepEqual(saved.scores, { a: 30, b: 21 });
   assert.equal(saved.schema, SCHEMA); assert.equal(saved.round, 8);
   assert.equal(saved.targets.includes('anenst'), false);
+});
+
+test('all 60 grids give each word a limited clue, counting shared intersections', () => {
+  for (const L of levels) for (let i = 0; i < 20; i++) {
+    const s = { ...fresh(), id: `hint-${i}`, round: i + 1, targets: L.t }, cw = buildCrossword(L.t);
+    const hints = letterHints(s, cw), visible = visibleLetters(s, cw, hints);
+    assert.ok(hints.size > 0);
+    assert.equal(visible.size, hints.size);
+    assert.equal(completed(s), false);
+    assert.deepEqual(s.scores, {});
+    for (const p of cw.placed) {
+      const pattern = wordPattern(p, visible).split(' '), shown = pattern.filter(c => c !== '_').length;
+      assert.ok(shown >= 1 && shown <= Math.floor(p.word.length / 3), `${L.l}: ${p.word} has ${shown} clues`);
+      assert.ok(pattern.filter(c => c === '_').length >= 2);
+      pattern.forEach((c, j) => { if (c !== '_') assert.equal(c, p.word[j].toUpperCase()); });
+    }
+  }
+});
+
+test('clues are identical for both players and reloads, but can vary in a later round', () => {
+  const s = fresh(), before = copy(s), hints = letterHints(s), variants = new Set();
+  assert.deepEqual(letterHints(normalize(JSON.parse(JSON.stringify(s)))), hints);
+  assert.deepEqual(letterHints({ ...s, targets: [...s.targets].reverse() }), hints);
+  for (let round = 1; round <= 12; round++) variants.add([...letterHints({ ...s, round })].sort().join('|'));
+  assert.ok(variants.size > 1);
+  assert.deepEqual(s, before);
+});
+
+test('a solved word reveals its letters and intersections without rerolling or auto-solving clues', () => {
+  const s = fresh(), cw = buildCrossword(s.targets), hints = letterHints(s);
+  const next = act(s, 'a', { type: 'word', word: s.targets[0] }), visible = visibleLetters(next, cw);
+  assert.deepEqual(letterHints(next), hints);
+  assert.equal(next.found.length, 1);
+  for (const cell of cw.cells) {
+    const k = cellKey(cell.r, cell.c), expected = hints.has(k) || cell.words.includes(s.targets[0]);
+    assert.equal(visible.has(k), expected);
+  }
+  const solved = cw.placed.find(p => p.word === s.targets[0]);
+  assert.equal(wordPattern(solved, visible), [...solved.word.toUpperCase()].join(' '));
+  assert.equal(completed(next), false);
+});
+
+test('the UI shows partial letter patterns and keeps the same clues after shuffling the wheel', t => {
+  fixtures(t);
+  const ui = mounted(); t.after(() => ui.leave());
+  const current = store.get(SOLO_KEY), snapshot = copy(current);
+  const patterns = html => [...html.matchAll(/class="wf-pattern">([^<]+)</g)].map(m => m[1]);
+  const before = patterns(ui.main());
+  assert.equal(before.length, current.targets.length);
+  assert.ok(before.every(p => p.includes('_') && /[A-Z]/.test(p)));
+  assert.match(ui.main(), /class="cw-cell given"/);
+  assert.doesNotMatch(ui.main(), /nghĩa tiếng Việt|Gợi ý nghĩa|undefined/);
+  ui.click({ a: 'mix' });
+  assert.deepEqual(patterns(ui.main()), before);
+  assert.deepEqual(store.get(SOLO_KEY), snapshot);
 });
