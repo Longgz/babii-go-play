@@ -46,6 +46,11 @@
 .tile{position:absolute;transform:translate(-50%,-50%);width:52px;height:52px;border-radius:50%;border:0;font:inherit;font-size:1.4rem;font-weight:800;background:var(--giay);color:var(--ink)}
 .tile.on{background:var(--lantern)}.tile:disabled{opacity:.6}
 .cur{min-height:2.2rem;text-align:center;font-size:1.6rem;font-weight:800;letter-spacing:.15em}
+.wf-modes{margin:12px 0}.wf-modes small,.wf-note,.wf-progress{color:var(--mute);font-size:.76rem;line-height:1.6}.wf-progress{margin:0;text-align:center}.wf-error{font-size:.8rem;line-height:1.5}.wordfinder .cw-cell{font-size:clamp(.6rem,3vw,1.15rem)}
+.wordfinder .crossword-board{box-sizing:border-box;grid-template-columns:repeat(var(--cw-cols),minmax(0,1fr));grid-template-rows:repeat(var(--cw-rows),auto);gap:3px;padding:7px;max-width:100%;width:min(100%,calc(var(--cw-cols)*34px + 14px))}
+.wordfinder .cw-cell{position:relative;min-width:0;min-height:0}.wordfinder .cw-cell.empty{color:var(--mute)}.wordfinder .cw-cell>span{padding-top:3px}
+.cw-number{position:absolute;top:1px;left:2px;font-size:clamp(.42rem,1.6vw,.6rem);line-height:1;font-weight:600}
+.wf-clues{padding:10px;border-radius:12px;background:#ffffff08;font-size:.78rem}.wf-clues>b{color:var(--mute)}.wf-clues ul{list-style:none;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:10px 0 0;padding:0}.wf-clues li{display:flex;gap:6px;line-height:1.45;min-width:0;overflow-wrap:anywhere}.wf-clues li.solved{color:#86efac}.wf-clue-number{color:var(--lantern);white-space:nowrap;font-weight:800}.wf-clues small{display:block;color:var(--mute);font-size:.64rem}.wf-bonus{font-size:.75rem;color:var(--mute)}.wf-bonus .chips{margin-top:8px}
 .slots{display:flex;flex-wrap:wrap;gap:10px}.slot{display:flex;gap:2px}
 .slot i{width:22px;height:26px;border-radius:5px;background:#ffffff26;font-style:normal;font-weight:800;text-align:center;line-height:26px}
 /* Bảng ô chữ đan chéo hàng - cột */

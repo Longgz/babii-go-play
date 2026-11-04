@@ -1,144 +1,83 @@
-// Thuật toán sinh lưới ô chữ đan chéo (Crossword Grid Generator)
-// Sắp xếp các từ mục tiêu đan xen nhau theo hàng ngang (H) và cột dọc (V)
-
-function canPlace(word, r, c, dir, grid) {
-  const beforeR = dir === 'H' ? r : r - 1;
-  const beforeC = dir === 'H' ? c - 1 : c;
-  if (grid[beforeR + ',' + beforeC]) return false;
-
-  const afterR = dir === 'H' ? r : r + word.length;
-  const afterC = dir === 'H' ? c + word.length : c;
-  if (grid[afterR + ',' + afterC]) return false;
-
-  let intersections = 0;
-  for (let i = 0; i < word.length; i++) {
-    const curR = dir === 'H' ? r : r + i;
-    const curC = dir === 'H' ? c + i : c;
-    const existing = grid[curR + ',' + curC];
-    if (existing) {
-      if (existing !== word[i]) return false;
-      intersections++;
-    } else {
-      if (dir === 'H') {
-        if (grid[(curR - 1) + ',' + curC] || grid[(curR + 1) + ',' + curC]) return false;
-      } else {
-        if (grid[curR + ',' + (curC - 1)] || grid[curR + ',' + (curC + 1)]) return false;
-      }
-    }
-  }
-  return intersections > 0;
-}
-
-function calcBoundingBox(placed, next) {
-  let minR = next.r, maxR = next.r + (next.dir === 'V' ? next.word.length : 1);
-  let minC = next.c, maxC = next.c + (next.dir === 'H' ? next.word.length : 1);
-  for (const p of placed) {
-    minR = Math.min(minR, p.r);
-    maxR = Math.max(maxR, p.r + (p.dir === 'V' ? p.word.length : 1));
-    minC = Math.min(minC, p.c);
-    maxC = Math.max(maxC, p.c + (p.dir === 'H' ? p.word.length : 1));
-  }
-  return (maxR - minR) * (maxC - minC);
-}
-
+export const MAX_GRID = 9;
 const cache = new Map();
-
+const key = (r, c) => `${r},${c}`;
+const cellAt = (p, i) => [p.r + (p.dir === 'V' ? i : 0), p.c + (p.dir === 'H' ? i : 0)];
+function bounds(placed) {
+  const rs = placed.flatMap(p => [p.r, p.r + (p.dir === 'V' ? p.word.length - 1 : 0)]);
+  const cs = placed.flatMap(p => [p.c, p.c + (p.dir === 'H' ? p.word.length - 1 : 0)]);
+  const minR = Math.min(...rs), minC = Math.min(...cs);
+  return { minR, minC, rows: Math.max(...rs) - minR + 1, cols: Math.max(...cs) - minC + 1 };
+}
+function fits(next, placed, grid) {
+  const { rows, cols } = bounds([...placed, next]);
+  if (rows > MAX_GRID || cols > MAX_GRID) return false;
+  const before = cellAt(next, -1), after = cellAt(next, next.word.length);
+  if (grid.has(key(...before)) || grid.has(key(...after))) return false;
+  let crossings = 0;
+  for (let i = 0; i < next.word.length; i++) {
+    const [r, c] = cellAt(next, i), existing = grid.get(key(r, c));
+    if (existing) {
+      // A shorter word must not be hidden on top of a longer word in the same direction.
+      if (existing.letter !== next.word[i] || existing.dirs.includes(next.dir)) return false;
+      crossings++;
+    } else if (next.dir === 'H'
+      ? grid.has(key(r - 1, c)) || grid.has(key(r + 1, c))
+      : grid.has(key(r, c - 1)) || grid.has(key(r, c + 1))) return false;
+  }
+  return crossings > 0;
+}
+function add(grid, p) {
+  const next = new Map(grid);
+  for (let i = 0; i < p.word.length; i++) {
+    const k = key(...cellAt(p, i)), existing = grid.get(k);
+    next.set(k, { letter: p.word[i], dirs: [...(existing?.dirs || []), p.dir] });
+  }
+  return next;
+}
 export function buildCrossword(words) {
-  const cacheKey = words.slice().sort().join('|');
+  const list = [...words].sort((a, b) => b.length - a.length || a.localeCompare(b)), cacheKey = list.join('|');
   if (cache.has(cacheKey)) return cache.get(cacheKey);
-
-  const list = [...words].sort((a, b) => b.length - a.length);
-  const grid = {};
-  const placed = [];
-
-  // Đặt từ dài nhất nằm ngang ở trung tâm
-  const first = list[0];
-  for (let i = 0; i < first.length; i++) grid['0,' + i] = first[i];
-  placed.push({ word: first, r: 0, c: 0, dir: 'H' });
-
-  // Tìm vị trí đan chéo tối ưu cho các từ còn lại
-  for (let wIdx = 1; wIdx < list.length; wIdx++) {
-    const word = list[wIdx];
-    let best = null;
-    let minScore = Infinity;
-
-    for (const p of placed) {
-      const oppDir = p.dir === 'H' ? 'V' : 'H';
-      for (let i = 0; i < word.length; i++) {
-        for (let j = 0; j < p.word.length; j++) {
-          if (p.word[j] === word[i]) {
-            const startR = p.dir === 'H' ? p.r - i : p.r + j;
-            const startC = p.dir === 'H' ? p.c + j : p.c - i;
-            if (canPlace(word, startR, startC, oppDir, grid)) {
-              const score = calcBoundingBox(placed, { word, r: startR, c: startC, dir: oppDir });
-              if (score < minScore) {
-                minScore = score;
-                best = { word, r: startR, c: startC, dir: oppDir };
-              }
-            }
-          }
-        }
+  if (!list.length || new Set(list).size !== list.length || list.some(w => !/^[a-z]{3,6}$/.test(w))) return null;
+  let attempts = 0;
+  function search(placed, remaining, grid) {
+    if (!remaining.length) return placed;
+    if (++attempts > 12000) return null;
+    for (const word of remaining) {
+      const candidates = new Map();
+      for (const p of placed) for (let i = 0; i < word.length; i++) for (let j = 0; j < p.word.length; j++) {
+        if (word[i] !== p.word[j]) continue;
+        const [r, c] = cellAt(p, j), dir = p.dir === 'H' ? 'V' : 'H';
+        const next = { word, dir, r: r - (dir === 'V' ? i : 0), c: c - (dir === 'H' ? i : 0) };
+        if (fits(next, placed, grid)) candidates.set(`${next.r},${next.c},${dir}`, next);
+      }
+      const score = p => { const b = bounds([...placed, p]); return b.rows * b.cols + Math.abs(b.cols - b.rows); };
+      for (const candidate of [...candidates.values()].sort((a, b) => score(a) - score(b))) {
+        const solved = search([...placed, candidate], remaining.filter(w => w !== word), add(grid, candidate));
+        if (solved) return solved;
       }
     }
-
-    if (best) {
-      for (let i = 0; i < word.length; i++) {
-        const curR = best.dir === 'H' ? best.r : best.r + i;
-        const curC = best.dir === 'H' ? best.c + i : best.c;
-        grid[curR + ',' + curC] = word[i];
-      }
-      placed.push(best);
-    } else {
-      // Trường hợp không có chữ cái giao nhau: đặt song song bên dưới có khoảng cách 1 ô
-      let maxR = -Infinity, minC = Infinity;
-      for (const p of placed) {
-        maxR = Math.max(maxR, p.r + (p.dir === 'V' ? p.word.length : 1));
-        minC = Math.min(minC, p.c);
-      }
-      const fallback = { word, r: maxR + 1, c: minC, dir: 'H' };
-      for (let i = 0; i < word.length; i++) grid[fallback.r + ',' + (fallback.c + i)] = word[i];
-      placed.push(fallback);
-    }
+    return null;
   }
-
-  // Chuẩn hóa tọa độ về (0, 0)
-  let minR = Infinity, minC = Infinity, maxR = -Infinity, maxC = -Infinity;
-  for (const p of placed) {
-    minR = Math.min(minR, p.r);
-    minC = Math.min(minC, p.c);
-    maxR = Math.max(maxR, p.r + (p.dir === 'V' ? p.word.length - 1 : 0));
-    maxC = Math.max(maxC, p.c + (p.dir === 'H' ? p.word.length - 1 : 0));
-  }
-
-  const rows = maxR - minR + 1;
-  const cols = maxC - minC + 1;
-  const normalizedPlaced = placed.map(p => ({
-    ...p,
-    r: p.r - minR,
-    c: p.c - minC
-  }));
-
-  // Tạo map từng ô chữ (cell) và các từ đi qua ô đó
-  const cellMap = {};
-  normalizedPlaced.forEach(p => {
+  const first = { word: list[0], r: 0, c: 0, dir: 'H' };
+  const placed = search([first], list.slice(1), add(new Map(), first));
+  if (!placed) return null; // Never silently drop words or grow a disconnected oversized board.
+  const { rows, cols, minR, minC } = bounds(placed);
+  const normalized = placed.map(p => ({ ...p, r: p.r - minR, c: p.c - minC }));
+  const starts = [...new Set(normalized.map(p => key(p.r, p.c)))].sort((a, b) => {
+    const [ar, ac] = a.split(',').map(Number), [br, bc] = b.split(',').map(Number); return ar - br || ac - bc;
+  });
+  normalized.forEach(p => { p.number = starts.indexOf(key(p.r, p.c)) + 1; });
+  const cells = new Map();
+  normalized.forEach(p => {
     for (let i = 0; i < p.word.length; i++) {
-      const cr = p.dir === 'H' ? p.r : p.r + i;
-      const cc = p.dir === 'H' ? p.c + i : p.c;
-      const key = cr + ',' + cc;
-      if (!cellMap[key]) {
-        cellMap[key] = { r: cr, c: cc, letter: p.word[i], words: [] };
-      }
-      cellMap[key].words.push(p.word);
+      const [r, c] = cellAt(p, i), k = key(r, c);
+      if (!cells.has(k)) cells.set(k, { r, c, letter: p.word[i], words: [] });
+      const cell = cells.get(k); cell.words.push(p.word);
+      if (i === 0) cell.number = p.number;
     }
   });
-
-  const result = {
-    rows,
-    cols,
-    placed: normalizedPlaced,
-    cells: Object.values(cellMap)
-  };
-
+  const result = { rows, cols, placed: normalized, cells: [...cells.values()] };
+  if (cache.size >= 100) cache.delete(cache.keys().next().value);
   cache.set(cacheKey, result);
   return result;
 }
