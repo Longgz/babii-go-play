@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { newGame, stamp, valid, mirror, aimError, FOLD_MS } from './logic.js';
+import { newGame, stamp, valid, mirror, aimError, FOLD_MS, unitRadius } from './logic.js';
 const players = [{ uid: 'a', name: 'Bi' }, { uid: 'b', name: 'Na' }];
 const game = () => newGame(players, 'match', () => .3);
 const shot = (s, p) => ({ id: s.id, rev: s.rev, uid: s.players[s.turn].uid, ...p });
@@ -39,4 +39,24 @@ test('win is resolved atomically and further shots are blocked', () => {
 test('corrupt saved data is rejected before rendering', () => {
   assert.equal(valid({ ...game(), shots: [{ x: '<svg', y: 1, side: 0, n: 1, hits: 0 }] }), false);
   assert.equal(valid({ ...game(), units: [] }), false); assert.equal(valid(null), false);
+});
+test('three to five units use matching hitboxes, reachable targets, and a stable shared configuration', () => {
+  for (const count of [3, 4, 5]) for (let i = 0; i < 40; i++) {
+    const s = newGame(players, 'size', Math.random, count);
+    assert.ok(valid(s)); assert.equal(s.units.length, count * 2); assert.equal(unitRadius(s), 22 - count * 2);
+    for (const u of s.units) { s.turn = 1 - u.side; assert.equal(aimError(s, mirror(u)), ''); }
+    s.turn = 0;
+    const red = s.units.filter(u => u.side === 1); red.slice(0, -1).forEach(u => { u.alive = false; });
+    const next = stamp(s, shot(s, mirror(red.at(-1))), 1000); assert.equal(next.winner, 0); assert.equal(next.count, count);
+  }
+  for (const count of [2, 6, 3.5, NaN]) assert.throws(() => newGame(players, 'bad', Math.random, count));
+  const legacy = game(); delete legacy.count; legacy.v = 1; assert.ok(valid(legacy)); assert.equal(unitRadius(legacy), 16);
+});
+test('a near miss uses the smaller five-unit hitbox while three-unit rules stay unchanged', () => {
+  for (const count of [3, 5]) {
+    const s = newGame(players, 'radius', Math.random, count);
+    s.units = [0, 1].flatMap(side => Array.from({ length: count }, (_, i) => ({ side, x: side ? 600 : 60, y: 100 + i * 80, alive: true })));
+    const next = stamp(s, shot(s, mirror({ x: 628, y: 100 })), 1000);
+    assert.equal(next.shots[0].hits, count === 3 ? 1 : 0);
+  }
 });

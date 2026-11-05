@@ -5,11 +5,12 @@ import game from './index.js';
 const settle = async () => { for (let i = 0; i < 8; i++) await Promise.resolve(); };
 function environment(t) {
   let time = 100000, perf = performance.now(), count = 0;
-  const frames = new Map(), timers = new Map(), listeners = new Map(), storage = new Map();
+  const frames = new Map(), timers = new Map(), listeners = new Map(), storage = new Map(), restorers = [], cleanup = [];
+  t.after(() => { cleanup.forEach(fn => fn()); restorers.forEach(fn => fn()); });
   const setGlobal = (key, value) => {
     const before = Object.getOwnPropertyDescriptor(globalThis, key);
     Object.defineProperty(globalThis, key, { value, configurable: true, writable: true });
-    t.after(() => { if (before) Object.defineProperty(globalThis, key, before); else delete globalThis[key]; });
+    restorers.push(() => { if (before) Object.defineProperty(globalThis, key, before); else delete globalThis[key]; });
   };
   const listen = (k, cb) => { if (!listeners.has(k)) listeners.set(k, new Set()); listeners.get(k).add(cb); };
   const unlisten = (k, cb) => listeners.get(k)?.delete(cb);
@@ -22,7 +23,7 @@ function environment(t) {
   setGlobal('setInterval', (fn, ms) => { timers.set(++count, { fn, ms, next: time + ms }); return count; });
   setGlobal('clearInterval', id => timers.delete(id));
   return {
-    now: () => time, frames, timers, listeners, document,
+    now: () => time, frames, timers, listeners, document, dispose: fn => cleanup.push(fn),
     async advance(ms) {
       for (let left = ms; left > 0;) {
         const dt = Math.min(16.667, left); left -= dt; time += dt; perf += dt;
@@ -80,33 +81,40 @@ function mount(room, uid) {
   };
 }
 async function group(t) {
-  const env = environment(t), srv = server(env), host = mount(srv.client(), 'host'), a = mount(srv.client(), 'a'), b = mount(srv.client(), 'b');
-  t.after(() => { host.leave(); a.leave(); b.leave(); });
-  await host.click('host'); await a.click('join'); await b.click('join'); await env.advance(1100);
-  return { env, srv, host, a, b };
+  const env = environment(t), srv = server(env), a = mount(srv.client(), 'a'), b = mount(srv.client(), 'b');
+  env.dispose(() => { a.leave(); b.leave(); });
+  await settle(); await env.advance(1100);
+  return { env, srv, host: a, a, b };
 }
 
-test('a screen and two mounted controllers complete all three rounds with the same scores', async t => {
+test('two players automatically enter, ready up and complete three rounds on their own screens', async t => {
   const { env, srv, host, a, b } = await group(t);
-  assert.match(host.q('.snow-host-actions').innerHTML, /2\/6/);
+  assert.match(a.q('.snow-message').textContent, /2\/6/);
+  assert.doesNotMatch(a.el.innerHTML, /Mở màn hình chung|Dùng làm tay cầm|Xoay ngang/);
   for (let round = 1; round <= 3; round++) {
-    await host.click('start'); assert.equal(srv.get('snow/state').phase, 'countdown');
+    await a.click('ready'); assert.notEqual(srv.get('snow/state').phase, 'countdown');
+    await b.click('ready'); await env.advance(550); assert.equal(srv.get('snow/state').phase, 'countdown');
     await env.advance(4000); assert.equal(srv.get('snow/state').phase, 'playing');
     assert.equal(srv.get('snow/state').round, round);
     assert.equal(a.q('.snow-dash').disabled, false); assert.equal(b.q('.snow-dash').disabled, false);
+    const snapshot = srv.get('snow/frame'); assert.deepEqual(Object.keys(snapshot.balls).sort(), ['a', 'b']);
+    assert.ok(Number.isFinite(snapshot.balls.a.x)); assert.equal(b.q('.snow-stage').hidden, false);
     await env.advance(46000);
     const s = srv.get('snow/state'); assert.equal(s.phase, round < 3 ? 'results' : 'ended');
     assert.equal(a.q('.snow-results').innerHTML, b.q('.snow-results').innerHTML);
     assert.equal(s.scores.a, round * 3); assert.equal(s.scores.b, round * 3);
-    if (round < 3) { await a.click('ready'); assert.match(host.q('.snow-players').innerHTML, /Sẵn sàng/); }
   }
   assert.match(host.q('.snow-results').innerHTML, /đồng thắng/);
+  const oldId = srv.get('snow/state').id;
+  await a.click('ready'); await b.click('ready'); await env.advance(600);
+  assert.notEqual(srv.get('snow/state').id, oldId); assert.equal(srv.get('snow/state').phase, 'countdown');
+  assert.equal(srv.get('snow/state').round, 1);
 });
 test('touch movement, simultaneous dash, pointer cancellation and cooldown remain synchronized', async t => {
-  const { env, srv, host, a } = await group(t);
-  await host.click('start'); await env.advance(4000);
-  const pad = a.q('.snow-pad'), e = { pointerId: 1, clientX: 100, clientY: 100, button: 0, preventDefault() {} };
-  pad.onpointerdown(e); pad.onpointermove({ ...e, clientX: 145 });
+  const { env, srv, a, b } = await group(t);
+  await a.click('ready'); await b.click('ready'); await env.advance(4500);
+  const pad = a.q('.snow-pad'), e = { pointerId: 1, clientX: 150, clientY: 105, button: 0, preventDefault() {} };
+  pad.onpointerdown(e); pad.onpointermove({ ...e, clientX: 195 });
   a.q('.snow-dash').onpointerdown(e); await env.advance(150);
   const p = srv.get('snow/state').players.find(p => p.uid === 'a'), packet = srv.get(`snow/inputs/a/${p.token}`);
   assert.ok(packet.x > .8); assert.equal(packet.dash, 1);
@@ -115,22 +123,45 @@ test('touch movement, simultaneous dash, pointer cancellation and cooldown remai
   pad.onpointercancel(e); await env.advance(100); assert.equal(srv.get(`snow/inputs/a/${p.token}`).x, 0);
   await env.advance(2200); assert.equal(a.q('.snow-dash').disabled, false);
 });
-test('late joiners spectate, host disconnect closes the round, and returning cannot resume stale physics', async t => {
-  const { env, srv, host, a } = await group(t);
-  await host.click('start'); await env.advance(4000);
-  const visitor = mount(srv.client(), 'visitor'); t.after(() => visitor.leave());
-  await visitor.click('join'); assert.equal(srv.get('snow/state').players.length, 2);
-  assert.match(visitor.q('.snow-control-status').textContent, /cổ vũ/);
-  host.room.connected(false); await env.advance(1000); host.room.connected(true); await env.advance(100);
-  assert.equal(srv.get('snow/state').phase, 'closed'); assert.equal(a.q('.snow-dash').disabled, true);
-  await host.click('new'); assert.equal(srv.get('snow/state').phase, 'lobby'); assert.equal(a.q('.snow-welcome').hidden, false);
+test('late joiners see the board and wait; connection recovery resets the lobby without choosing a host', async t => {
+  const { env, srv, host, a, b } = await group(t);
+  await a.click('ready'); await b.click('ready'); await env.advance(4500);
+  const visitor = mount(srv.client(), 'visitor'); env.dispose(() => visitor.leave());
+  await env.advance(600); assert.equal(srv.get('snow/state').players.length, 2);
+  assert.match(visitor.q('.snow-control-status').textContent, /Đang xem/); assert.equal(visitor.q('.snow-stage').hidden, false);
+  const oldId = srv.get('snow/state').id;
+  host.room.connected(false); await env.advance(1000); host.room.connected(true); await env.advance(1500);
+  assert.equal(srv.get('snow/state').phase, 'lobby'); assert.notEqual(srv.get('snow/state').id, oldId);
+  assert.equal(a.q('.snow-dash').disabled, true); assert.match(a.q('.snow-ready').innerHTML, /Sẵn sàng/);
 });
 test('hidden host stops the round and unmount removes every subscription, frame and interval', async t => {
   const { env, srv, host, a, b } = await group(t);
-  await host.click('start'); await env.advance(4000);
+  await a.click('ready'); await b.click('ready'); await env.advance(4500);
   env.document.hidden = true; env.emit('visibilitychange'); await settle();
   assert.equal(srv.get('snow/state').phase, 'closed');
   host.leave(); a.leave(); b.leave(); await settle();
   assert.equal(srv.watchers.size, 0); assert.equal(env.frames.size, 0); assert.equal(env.timers.size, 0);
   assert.ok([...env.listeners.values()].every(s => s.size === 0));
+});
+test('one player cannot start alone and cancelling readiness keeps the lobby waiting', async t => {
+  const env = environment(t), srv = server(env), a = mount(srv.client(), 'a'); env.dispose(() => a.leave());
+  await settle(); await env.advance(1100); await a.click('ready'); await env.advance(1100);
+  assert.equal(srv.get('snow/state').phase, 'lobby');
+  await a.click('ready');
+  const b = mount(srv.client(), 'b'); env.dispose(() => b.leave()); await env.advance(1100);
+  await b.click('ready'); await env.advance(600); assert.equal(srv.get('snow/state').phase, 'lobby');
+  await a.click('ready'); await env.advance(600); assert.equal(srv.get('snow/state').phase, 'countdown');
+});
+test('reopening a participant restores the same ball and dash counter during an active round', async t => {
+  const { env, srv, a, b } = await group(t);
+  await a.click('ready'); await b.click('ready'); await env.advance(4500);
+  b.q('.snow-dash').onpointerdown({ preventDefault() {} }); await env.advance(150);
+  const before = srv.get('snow/state'), seat = before.players.find(p => p.uid === 'b');
+  assert.equal(srv.get(`snow/inputs/b/${seat.token}`).dash, 1);
+  b.leave(); await settle();
+  const reopened = mount(srv.client(), 'b'); env.dispose(() => reopened.leave()); await env.advance(2300);
+  assert.equal(srv.get('snow/state').id, before.id); assert.equal(srv.get('snow/peers/b').token, seat.token);
+  assert.equal(reopened.q('.snow-dash').disabled, false);
+  reopened.q('.snow-dash').onpointerdown({ preventDefault() {} }); await env.advance(150);
+  assert.equal(srv.get(`snow/inputs/b/${seat.token}`).dash, 2);
 });

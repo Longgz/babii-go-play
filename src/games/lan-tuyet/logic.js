@@ -1,5 +1,5 @@
-// Physics lives only on the screen hosting the match. Network packets contain
-// intentions and summaries, never positions, velocities or ball radii.
+// One elected participant simulates physics. Everyone receives a compact board
+// snapshot so the arena and controls can share the same portrait screen.
 export const COLORS = ['#ff5d73', '#ffc93c', '#3ddc97', '#4da3ff', '#b57bff', '#ff9340'];
 export const SHAPES = ['●', '▲', '■', '◆', '★', '✚'];
 export const DT = 1 / 60, DURATION = 45, ROUND_COUNT = 3, COOLDOWN = 2;
@@ -97,4 +97,34 @@ export function summary(world, now) {
     alive: p.alive, rank: p.rank, points: p.points, dashUntil: now + p.dashCd * 1000,
     connected: now - p.lastSeen < 800, offline: now - p.lastSeen > 10000
   }]));
+}
+
+export function boardSnapshot(world, state, seq, now) {
+  const round = n => Math.round(n * 1000) / 1000;
+  return { id: state.id, round: state.round, hostToken: state.hostToken, seq, at: now,
+    elapsed: round(world.elapsed), arena: round(world.arena), over: world.over,
+    balls: Object.fromEntries(world.players.map(p => [p.uid, {
+      x: round(p.x), y: round(p.y), r: round(p.r), roll: round(p.roll), heading: round(p.heading),
+      alive: p.alive, dashCd: round(p.dashCd), fallenAt: round(p.fallenAt)
+    }])) };
+}
+export function readBoard(frame, state) {
+  if (!frame || !state?.players || frame.id !== state.id || frame.round !== state.round || frame.hostToken !== state.hostToken ||
+      !Number.isSafeInteger(frame.seq) || !Number.isFinite(frame.at) || !Number.isFinite(frame.elapsed) || frame.elapsed < 0 || frame.elapsed > DURATION + 1 ||
+      !Number.isFinite(frame.arena) || frame.arena < MIN_ARENA || frame.arena > ARENA) return null;
+  const players = [];
+  for (const [i, p] of state.players.entries()) {
+    const b = frame.balls?.[p.uid];
+    if (!b || ![b.x, b.y, b.r, b.roll, b.heading, b.dashCd, b.fallenAt].every(Number.isFinite) || Math.abs(b.x) > 2000 || Math.abs(b.y) > 2000 || b.r < RADIUS || b.r > MAX_RADIUS || typeof b.alive !== 'boolean') return null;
+    players.push({ ...b, uid: p.uid, name: p.name, color: COLORS[i], shape: SHAPES[i] });
+  }
+  return { elapsed: frame.elapsed, arena: frame.arena, over: frame.over === true, players };
+}
+export function interpolateBoard(previous, current, alpha) {
+  if (!current || !previous) return current;
+  const t = Math.max(0, Math.min(1, alpha)), lerp = (a, b) => a + (b - a) * t;
+  return { ...current, arena: lerp(previous.arena, current.arena), elapsed: lerp(previous.elapsed, current.elapsed), players: current.players.map(p => {
+    const old = previous.players.find(q => q.uid === p.uid);
+    return old ? { ...p, x: lerp(old.x, p.x), y: lerp(old.y, p.y), r: lerp(old.r, p.r), roll: lerp(old.roll, p.roll) } : p;
+  }) };
 }

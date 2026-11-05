@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createWorld, step, collide, ingest, vector, summary, MAX_RADIUS, DT } from './logic.js';
-import { claim, updateHost, startRound, finishRound, readyPlayers, validState } from './sync.js';
+import { createWorld, step, collide, ingest, vector, summary, MAX_RADIUS, DT, boardSnapshot, readBoard, interpolateBoard } from './logic.js';
+import { claim, updateHost, startRound, finishRound, readyPlayers, readyRoster, validState } from './sync.js';
 const players = [{ uid: 'a', name: 'Bi', token: 'ta' }, { uid: 'b', name: 'Na', token: 'tb' }];
 const packet = (seq, dash = 0) => ({ id: 'match', round: 1, seq, dash, x: 1, y: 0 });
 const start = () => claim(null, 'host', 'token', 'match', 0);
@@ -77,4 +77,27 @@ test('network summaries expose no physics and corrupt state is rejected', () => 
   const payload = summary(createWorld(players), 0);
   for (const p of Object.values(payload)) for (const key of ['x', 'y', 'vx', 'vy', 'r']) assert.equal(key in p, false);
   assert.equal(validState({ ...start(), phase: 'playing', players: [] }), false);
+});
+test('all devices decode the same board and interpolate positions without changing collision authority', () => {
+  const s = { ...start(), ...startRound(start(), players, 0) }, world = createWorld(players);
+  const frame = boardSnapshot(world, s, 1, 100), first = readBoard(frame, s);
+  assert.ok(first); assert.equal(first.players.length, 2); assert.equal(first.players[0].uid, 'a');
+  world.players[0].x += 40;
+  const next = readBoard(boardSnapshot(world, s, 2, 200), s), middle = interpolateBoard(first, next, .5);
+  assert.equal(middle.players[0].x, first.players[0].x + 20); assert.equal(next.players[0].x, first.players[0].x + 40);
+  for (const patch of [{ id: 'old' }, { round: 2 }, { hostToken: 'other' }, { arena: NaN }, { balls: { a: { x: 'bad' } } }]) assert.equal(readBoard({ ...frame, ...patch }, s), null);
+});
+test('readiness requires two connected seats, every seat ready, and current round/connection tokens', () => {
+  const s = start(), peers = {}, packets = {}, ready = {};
+  for (let i = 0; i < 7; i++) {
+    const uid = String(i), token = `t${i}`;
+    peers[uid] = { id: s.id, name: uid, token, at: i };
+    packets[uid] = { [token]: { id: s.id, at: 1000 } };
+    ready[uid] = { id: s.id, round: 0, token };
+  }
+  assert.equal(readyRoster(s, peers, packets, ready, 1100).length, 6);
+  delete ready['6']; assert.equal(readyRoster(s, peers, packets, ready, 1100).length, 6);
+  ready['0'].token = 'old-tab'; assert.equal(readyRoster(s, peers, packets, ready, 1100).length, 0);
+  ready['0'].token = 't0'; ready['0'].round = 1; assert.equal(readyRoster(s, peers, packets, ready, 1100).length, 0);
+  assert.equal(readyRoster(s, peers, packets, ready, 10000).length, 0);
 });

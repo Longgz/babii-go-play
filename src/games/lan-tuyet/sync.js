@@ -38,3 +38,15 @@ export function finishRound(s, world, status) {
   return { phase: s.round >= ROUND_COUNT ? 'ended' : 'results', elapsed: world.elapsed, status,
     scores: Object.fromEntries(s.players.map(p => [p.uid, (s.scores?.[p.uid] || 0) + (status[p.uid]?.points || 0)])) };
 }
+
+// Readiness belongs to this connection and this round. Old tabs, prior matches,
+// and spectators cannot accidentally start the next round.
+export function readyRoster(s, peers, packets, readiness, now) {
+  if (!validState(s) || !['lobby', 'results', 'ended'].includes(s.phase)) return [];
+  let present = readyPlayers(peers, packets, s.id, now);
+  if (s.phase === 'results') present = present.filter(p => s.players.some(q => q.uid === p.uid && q.token === p.token));
+  const seats = present.slice(0, 6);
+  return seats.length >= 2 && seats.every(p => {
+    const r = readiness?.[p.uid]; return r?.id === s.id && r.round === s.round && r.token === p.token;
+  }) ? seats : [];
+}
