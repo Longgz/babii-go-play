@@ -46,10 +46,14 @@ function server(env) {
     }
   };
   return { get, watchers, client() {
-    let online = true, connection;
+    let online = true, connection, denied = false;
     return {
       code: 'ABCDEF', now: env.now, players: () => [],
-      watch(p, fn) { const sub = { p, fn, last: JSON.stringify(get(p)) }; watchers.add(sub); fn(copy(get(p))); return () => watchers.delete(sub); },
+      watch(p, fn, fail) {
+        if (denied) { fail?.(Object.assign(new Error('permission_denied at /snow/frame'), { code: 'PERMISSION_DENIED' })); return () => {}; }
+        const sub = { p, fn, last: JSON.stringify(get(p)) }; watchers.add(sub); fn(copy(get(p))); return () => watchers.delete(sub);
+      },
+      deny(v) { denied = v; },
       connection(fn) { connection = fn; fn(online); return () => { connection = null; }; },
       async onDisconnect() { return async () => {}; },
       connected(v) { online = v; connection?.(v); },
@@ -164,4 +168,14 @@ test('reopening a participant restores the same ball and dash counter during an 
   assert.equal(reopened.q('.snow-dash').disabled, false);
   reopened.q('.snow-dash').onpointerdown({ preventDefault() {} }); await env.advance(150);
   assert.equal(srv.get(`snow/inputs/b/${seat.token}`).dash, 2);
+});
+test('denied access shows a stopped state and retry resubscribes after rules are fixed', async t => {
+  const env = environment(t), srv = server(env), room = srv.client(); room.deny(true);
+  const a = mount(room, 'a'); env.dispose(() => a.leave()); await env.advance(1200);
+  assert.match(a.q('.snow-error').textContent, /quyền truy cập/);
+  assert.equal(a.q('.snow-retry').hidden, false); assert.equal(a.q('.snow-overlay').textContent, 'Chưa mở được ván');
+  assert.equal(srv.get('snow/state'), null);
+  room.deny(false); await a.click('retry'); await env.advance(1200);
+  assert.equal(a.q('.snow-retry').hidden, true); assert.equal(a.q('.snow-error').textContent, '');
+  assert.equal(srv.get('snow/state').phase, 'lobby'); assert.match(a.q('.snow-ready').innerHTML, /Sẵn sàng/);
 });

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { newGame, stamp, valid, mirror, aimError, FOLD_MS, unitRadius } from './logic.js';
+import { newGame, stamp, valid, mirror, aimError, FOLD_MS, unitRadius, hitMode, hitRadius, inkRadius } from './logic.js';
 const players = [{ uid: 'a', name: 'Bi' }, { uid: 'b', name: 'Na' }];
 const game = () => newGame(players, 'match', () => .3);
 const shot = (s, p) => ({ id: s.id, rev: s.rev, uid: s.players[s.turn].uid, ...p });
@@ -54,9 +54,23 @@ test('three to five units use matching hitboxes, reachable targets, and a stable
 });
 test('a near miss uses the smaller five-unit hitbox while three-unit rules stay unchanged', () => {
   for (const count of [3, 5]) {
-    const s = newGame(players, 'radius', Math.random, count);
+    const s = newGame(players, 'radius', Math.random, count, 'easy');
     s.units = [0, 1].flatMap(side => Array.from({ length: count }, (_, i) => ({ side, x: side ? 600 : 60, y: 100 + i * 80, alive: true })));
     const next = stamp(s, shot(s, mirror({ x: 628, y: 100 })), 1000);
     assert.equal(next.shots[0].hits, count === 3 ? 1 : 0);
   }
+});
+test('difficulty scales actual hitbox and ink together, while saved older games keep broad hits', () => {
+  const distances = { easy: 30, normal: 19.5, hard: 12 };
+  for (const mode of Object.keys(distances)) {
+    const s = newGame(players, 'mode', Math.random, 3, mode);
+    s.units = [0, 1].flatMap(side => Array.from({ length: 3 }, (_, i) => ({ side, x: side ? 600 : 60, y: 100 + i * 120, alive: true })));
+    assert.equal(hitRadius(s) + inkRadius(s), distances[mode]);
+    assert.equal(stamp(s, shot(s, mirror({ x: 600 + distances[mode] - .01, y: 100 })), 1000).shots[0].hits, 1);
+    assert.equal(stamp(s, shot(s, mirror({ x: 600 + distances[mode] + .01, y: 100 })), 1000).shots[0].hits, 0);
+  }
+  const old = game(); old.v = 2; delete old.hitMode;
+  assert.ok(valid(old)); assert.equal(hitMode(old), 'easy'); assert.equal(hitRadius(old) + inkRadius(old), 30);
+  assert.throws(() => newGame(players, 'bad', Math.random, 3, 'invalid'));
+  assert.equal(valid({ ...old, hitMode: 'toString' }), false);
 });

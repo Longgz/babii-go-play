@@ -1,7 +1,7 @@
 import { esc } from '../../core/ui.js';
 import { onChange } from '../../core/room.js';
 import { clack, fanfare } from '../../core/sound.js';
-import { PATH, W, H, INK_R, FOLD_MS, valid, newGame, aimError, stamp, unitCount, unitRadius } from './logic.js';
+import { PATH, W, H, FOLD_MS, valid, newGame, aimError, stamp, unitCount, unitRadius, HIT_MODES, hitMode, hitRadius, inkRadius } from './logic.js';
 
 const COLORS = ['#2678c5', '#cf4c53'], KEY = 'fold-and-shoot';
 export default {
@@ -10,14 +10,14 @@ export default {
     const { room, me } = ctx;
     let mode = room ? 'room' : 'local', state = null, loaded = false, busy = false, alive = true, epoch = 0, version = 0, aim = null, error = '', animation = 0, lastShot = '', foldingSide = 0;
     let stop = () => {};
-    let selectedCount = 3;
+    let selectedCount = 3, selectedHitMode = 'normal';
     const q = s => el.querySelector(s), now = () => room?.now?.() ?? Date.now();
     const uid = () => mode === 'local' ? state?.players[state.turn].uid : me?.uid;
     const roster = () => mode === 'local' ? [0, 1].map(i => ({ uid: `local-${i}`, name: ctx.names[i] || `Người ${i + 1}` })) : room.players().slice(0, 2);
     el.innerHTML = `<section class="fold-game"><div class="bar"><a class="bk" href="#/">Quay lại</a><strong>🏹 Gập giấy bắn quân</strong></div><div class="row fold-modes"></div><div class="fold-options"></div><p class="fold-error err" role="alert"></p><div class="fold-content"></div><details class="panel fold-rules"><summary>Luật chơi & điều khiển</summary><p>Mỗi bên có 3–5 quân tùy thiết lập ván. Chấm mực ở nửa giấy của mình rồi bấm Gập & bắn. Mực in sang vị trí đối xứng qua nếp gấp; chạm quân đối thủ là hạ được quân đó. Không chấm đè lên quân mình. Hạ hết quân đối thủ để thắng.</p><p>3 quân giữ kích thước chuẩn; 4–5 quân nhỏ hơn và có vùng va chạm tương ứng. Thiết lập số quân áp dụng khi bắt đầu ván mới.</p><p>Chạm giấy để ngắm. Bàn phím: các phím mũi tên để chỉnh, Enter để bắn. Hai người có thể chơi chung một máy hoặc cùng phòng.</p></details></section>`;
     function receive(s) {
       if (!alive) return;
-      if (valid(s) && s.id !== state?.id) selectedCount = unitCount(s);
+      if (valid(s) && s.id !== state?.id) { selectedCount = unitCount(s); selectedHitMode = hitMode(s); }
       state = s; loaded = true; version++; aim = null;
       if (valid(s) && s.rev && lastShot !== `${s.id}:${s.rev}`) {
         const recent = s.readyAt - now();
@@ -34,7 +34,7 @@ export default {
       q('.fold-modes').innerHTML = `<button class="btn ${mode === 'local' ? 'pri' : ''}" data-a="local" ${busy ? 'disabled' : ''}>Chung một máy</button><button class="btn ${mode === 'room' ? 'pri' : ''}" data-a="room" ${!room || busy ? 'disabled' : ''}>Cùng phòng</button>`;
       q('.fold-error').textContent = error;
       const canConfigure = mode === 'local' || (valid(state) ? state.players : roster()).some(p => p.uid === me?.uid);
-      q('.fold-options').innerHTML = `<label>Quân mỗi đội <select class="fold-count" ${busy || animation || !canConfigure ? 'disabled' : ''}>${[3, 4, 5].map(n => `<option value="${n}" ${selectedCount === n ? 'selected' : ''}>${n} quân${n === 3 ? ' · chuẩn' : n === 5 ? ' · nhỏ' : ''}</option>`).join('')}</select></label><small>${valid(state) ? `Ván này: ${unitCount(state)} quân/đội. Thay đổi áp dụng cho ván mới.` : 'Chọn số quân trước khi bắt đầu.'}</small>`;
+      q('.fold-options').innerHTML = `<label>Quân mỗi đội <select class="fold-count" ${busy || animation || !canConfigure ? 'disabled' : ''}>${[3, 4, 5].map(n => `<option value="${n}" ${selectedCount === n ? 'selected' : ''}>${n} quân${n === 3 ? ' · chuẩn' : n === 5 ? ' · nhỏ' : ''}</option>`).join('')}</select></label><button class="btn fold-difficulty" data-a="difficulty" ${busy || animation || !canConfigure ? 'disabled' : ''} aria-label="Đổi kích thước vùng trúng. Hiện tại: ${HIT_MODES[selectedHitMode].label}">🎯 Vùng trúng: ${HIT_MODES[selectedHitMode].label}</button><small>Bấm để đổi Rộng → Vừa → Nhỏ. Vùng nhỏ cần ngắm chính xác hơn.</small><small>${valid(state) ? `Ván này: ${unitCount(state)} quân/đội · Vùng trúng ${HIT_MODES[hitMode(state)].label.toLowerCase()}. Thay đổi áp dụng cho ván mới.` : 'Chọn số quân và vùng trúng trước khi bắt đầu.'}</small>`;
       if (!loaded) { q('.fold-content').innerHTML = '<p>Đang tải ván…</p>'; return; }
       if (!valid(state)) {
         const players = roster(), can = players.length === 2 && (mode === 'local' || players.some(p => p.uid === me.uid));
@@ -46,9 +46,10 @@ export default {
         <p class="fold-status" role="status" aria-live="polite">${animation ? 'Đang gập giấy…' : s.winner >= 0 ? `🏆 ${esc(s.players[s.winner].name)} thắng!` : `${participant ? '' : 'Đang xem · '}Lượt ${esc(s.players[s.turn].name)} · chấm bên ${s.turn ? 'phải' : 'trái'}`}</p>
         <div class="fold-paper ${animation ? `folding side-${foldingSide}` : ''}"><svg class="fold-board" viewBox="0 0 ${W} ${H}" tabindex="0" role="application" aria-label="Tờ giấy hai nửa. Dùng phím mũi tên để ngắm và Enter để bắn.">
         <defs><pattern id="fold-lines" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M0 39.5H40" stroke="#819fbb" stroke-opacity=".22"/></pattern></defs><rect width="800" height="500" fill="#fcf3da"/><rect width="800" height="500" fill="url(#fold-lines)"/><rect x="${s.turn * 400}" width="400" height="500" fill="${COLORS[s.turn]}" opacity=".045"/><path d="M400 0V500" stroke="#ac9578" stroke-width="3" stroke-dasharray="10 9"/>
-        ${displayShots.map(t => [t.x, W - t.x].map((x, i) => `<circle cx="${x}" cy="${t.y}" r="${INK_R}" fill="${COLORS[t.side]}" opacity="${i ? '.46' : '.18'}"/>`).join('')).join('')}
+        ${displayShots.map(t => [t.x, W - t.x].map((x, i) => `<circle cx="${x}" cy="${t.y}" r="${inkRadius(s)}" fill="${COLORS[t.side]}" opacity="${i ? '.46' : '.18'}"/>`).join('')).join('')}
+        ${s.units.filter(u => u.alive).map(u => `<circle class="fold-hit-zone" cx="${u.x}" cy="${u.y}" r="${hitRadius(s)}" fill="${COLORS[u.side]}" fill-opacity=".08" stroke="${COLORS[u.side]}" stroke-opacity=".35" stroke-dasharray="2 3"/>`).join('')}
         ${s.units.map(u => `<g transform="translate(${u.x} ${u.y}) scale(${unitRadius(s) / 16})" stroke="${COLORS[u.side]}" fill="none" stroke-width="3" stroke-linecap="round" opacity="${u.alive ? 1 : .2}"><circle cy="-12" r="6"/><path d="M0 -6V9M-9 0L9 3M0 9L-8 21M0 9L8 21M12 -13Q30 1 12 15M12 -13V15M8 2H26"/>${!u.alive ? '<path d="M-14 -20L22 20"/>' : ''}</g>`).join('')}
-        ${aim ? `<g stroke="${COLORS[s.turn]}" fill="none" stroke-width="2"><circle cx="${aim.x}" cy="${aim.y}" r="14"/><path d="M${aim.x - 22} ${aim.y}h44M${aim.x} ${aim.y - 22}v44"/></g>` : ''}</svg><div class="fold-flap"></div></div>
+        ${aim ? `<g stroke="${COLORS[s.turn]}" fill="none" stroke-width="2"><circle cx="${aim.x}" cy="${aim.y}" r="${inkRadius(s)}"/><path d="M${aim.x - 22} ${aim.y}h44M${aim.x} ${aim.y - 22}v44"/></g>` : ''}</svg><div class="fold-flap"></div></div>
         <div class="row fold-actions"><button class="btn pri" data-a="shoot" ${!active || !aim ? 'disabled' : ''}>${busy ? 'Đang lưu…' : 'Gập & bắn 🏹'}</button>${participant ? `<button class="btn" data-a="start" ${busy || animation ? 'disabled' : ''}>Ván mới</button>` : ''}</div>
         <ol class="fold-history" aria-label="Lịch sử bắn">${shots.slice(-6).reverse().map(t => `<li><b>#${t.n} ${esc(s.players[t.side].name)}</b> · ${t.hits ? `Hạ ${t.hits} quân 🎯` : 'Bắn trượt'}</li>`).join('') || '<li>Chọn một điểm trên nửa giấy của bạn.</li>'}</ol>`;
     }
@@ -71,7 +72,7 @@ export default {
       const old = valid(state) ? state : null, players = old?.players || roster();
       if (players.length !== 2 || mode === 'room' && !players.some(p => p.uid === me.uid)) return;
       if (old && old.winner < 0 && !confirm('Bỏ ván hiện tại và chia lại vị trí quân?')) return;
-      const next = newGame(players, crypto.randomUUID(), Math.random, selectedCount);
+      const next = newGame(players, crypto.randomUUID(), Math.random, selectedCount, selectedHitMode);
       void commit(s => old ? valid(s) && s.id === old.id && s.rev === old.rev ? next : undefined : !valid(s) ? next : undefined);
     }
     function shoot() {
@@ -92,6 +93,7 @@ export default {
     el.onclick = e => {
       const a = e.target.closest('[data-a]')?.dataset.a;
       if (a === 'local' || a === 'room') { if (!busy) enter(a); }
+      else if (a === 'difficulty' && !busy && !animation) { const modes = Object.keys(HIT_MODES); selectedHitMode = modes[(modes.indexOf(selectedHitMode) + 1) % modes.length]; render(); }
       else if (a === 'start') start(); else if (a === 'shoot') shoot();
       else if (e.target.closest('.fold-board')) { const r = q('.fold-board').getBoundingClientRect(); setAim({ x: (e.clientX - r.left) * W / r.width, y: (e.clientY - r.top) * H / r.height }); }
     };

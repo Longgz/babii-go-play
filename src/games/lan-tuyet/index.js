@@ -12,7 +12,8 @@ export default {
     let saved = null;
     try { saved = JSON.parse(sessionStorage.getItem(storageKey) || 'null'); } catch {}
     const token = typeof saved?.token === 'string' && /^[a-f0-9-]{36}$/.test(saved.token) ? saved.token : crypto.randomUUID();
-    let alive = true, connected = true, loaded = false, state = null, peers = {}, packets = {}, readiness = {}, error = '';
+    let alive = true, connected = true, loaded = false, state = null, peers = {}, packets = {}, readiness = {}, error = '', permissionBlocked = false;
+    let stops = [], watchEpoch = 0;
     let joining = false, joinedId = '', readyBusy = false, hostWriting = false, frameWriting = false, sending = false, disconnectCancel = null;
     let world = null, worldKey = '', inputs = new Map(), input = { x: 0, y: 0 }, joystick = null, dashSeq = 0, dashUntil = 0, inputSeq = 0;
     let board = null, previousBoard = null, latestFrame = null, boardAt = 0, frameSeq = 0, lastFrameSend = 0, hostBeat = 0, dirty = false;
@@ -21,7 +22,7 @@ export default {
     let vibration = ctx.store.get('snow-vibration', true), reduced = ctx.store.get('snow-reduced', matchMedia('(prefers-reduced-motion: reduce)').matches);
     const keys = new Set(), q = s => el.querySelector(s), owned = () => isHost(state, me.uid, hostToken);
     const currentConnection = () => peers[me.uid]?.id === state?.id && peers[me.uid]?.token === token;
-    const healthy = () => connected && validState(state) && state.phase !== 'closed' && now() - state.updatedAt < STALE_MS;
+    const healthy = () => !permissionBlocked && connected && validState(state) && state.phase !== 'closed' && now() - state.updatedAt < STALE_MS;
     const participant = () => state?.players?.find(p => p.uid === me.uid && p.token === token);
     const freshBoard = () => owned() || latestFrame?.id === state?.id && latestFrame?.round === state?.round && now() - latestFrame.at < 1500;
     const canMove = () => healthy() && freshBoard() && currentConnection() && !!participant() && state.phase === 'playing' && state.status?.[me.uid]?.alive && !document.hidden;
@@ -29,9 +30,17 @@ export default {
     const seated = () => state?.phase === 'results' ? present().filter(p => state.players.some(v => v.uid === p.uid && v.token === p.token)) : present();
     const sound = (f, d = .1) => { if (!muted) tone(f, d, .08); };
     const vibrate = n => { if (vibration) navigator.vibrate?.(n); };
-    const showError = e => { if (alive) { error = typeof e === 'string' ? e : e.message; q('.snow-error').textContent = error; } };
+    const showError = e => {
+      if (!alive) return;
+      const message = typeof e === 'string' ? e : e?.message || 'Không kết nối được ván.';
+      if (/permission[_ -]?denied/i.test(`${e?.code || ''} ${message}`)) {
+        permissionBlocked = true; loaded = true; resetInput();
+        error = 'Chưa có quyền truy cập Lăn Tuyết. Chủ ứng dụng cần cập nhật quyền của game, sau đó bấm Thử kết nối lại.';
+      } else if (!permissionBlocked) error = message;
+      q('.snow-error').textContent = error; q('.snow-retry').hidden = !permissionBlocked; renderFast();
+    };
     el.innerHTML = `<section class="snow-game"><div class="bar"><a class="bk" href="#/">Quay lại</a><strong>❄ Lăn Tuyết</strong><button class="btn" data-a="sound" aria-label="Bật âm thanh">🔇</button></div>
-      <p class="snow-error err" role="alert"></p><div class="snow-message" role="status" aria-live="polite"></div><div class="snow-players"></div>
+      <p class="snow-error err" role="alert"></p><div class="snow-retry row" hidden><button class="btn pri" data-a="retry">Thử kết nối lại</button></div><div class="snow-message" role="status" aria-live="polite"></div><div class="snow-players"></div>
       <div class="snow-stage"><canvas aria-label="Sàn tuyết và vị trí của tất cả người chơi"></canvas><div class="snow-hud"><b class="snow-round"></b><strong class="snow-time"></strong><span class="snow-floor"></span></div><div class="snow-overlay" role="status" aria-live="polite"></div></div>
       <div class="snow-controls"><div class="snow-pad" tabindex="0" role="application" aria-label="Vòng di chuyển. Kéo để lăn hoặc dùng phím mũi tên và W A S D."><div class="snow-stick"><i></i></div><small>KÉO ĐỂ LĂN</small></div><button class="snow-dash" aria-label="Lao, hoặc nhấn phím cách"><span>LAO</span><small>Hồi 2 giây</small></button></div>
       <p class="snow-control-status" role="status" aria-live="polite"></p><div class="snow-ready row"></div><div class="snow-results panel" hidden></div>
@@ -77,7 +86,7 @@ export default {
       previousBoard = board; board = next; boardAt = performance.now(); latestFrame = raw;
     }
     async function hostPatch(patch) {
-      if (!alive || !owned() || hostWriting || !connected) return false;
+      if (!alive || permissionBlocked || !owned() || hostWriting || !connected) return false;
       hostWriting = true; const expected = state, time = now();
       try {
         const r = await room.transact(PATH, s => updateHost(s, expected, patch, time));
@@ -87,7 +96,7 @@ export default {
       finally { hostWriting = false; }
     }
     async function maintainSession() {
-      if (!alive || !loaded || !connected || document.hidden || joining) return;
+      if (!alive || permissionBlocked || !loaded || !connected || document.hidden || joining) return;
       joining = true;
       try {
         if (available(state, now())) {
@@ -111,7 +120,7 @@ export default {
       finally { joining = false; }
     }
     async function sendInput(force = false) {
-      if (!alive || !connected || !currentConnection() || sending || document.hidden && !force) return;
+      if (!alive || permissionBlocked || !connected || !currentConnection() || sending || document.hidden && !force) return;
       const t = now(), v = canMove() ? input : { x: 0, y: 0 };
       const changed = Math.hypot(v.x - lastSent.x, v.y - lastSent.y) > .05 || dashSeq !== lastSent.dash;
       if (!force && !changed && t - lastSend < 250) return;
@@ -154,18 +163,18 @@ export default {
       dirty = true;
     }
     async function publishBoard() {
-      if (!alive || !owned() || !world || frameWriting || !connected || interrupted) return;
+      if (!alive || permissionBlocked || !owned() || !world || frameWriting || !connected || interrupted) return;
       frameWriting = true; lastFrameSend = now();
       const frame = boardSnapshot(world, state, ++frameSeq, now());
       try { await room.set(`${BASE}/frame`, frame); }
-      catch (e) { showError(`Chưa tải được sàn tuyết: ${e.message}`); }
+      catch (e) { if (alive && state?.id === frame.id && state?.round === frame.round) showError(`Chưa tải được sàn tuyết: ${e.message}`); }
       finally { frameWriting = false; }
     }
     function frame(perf) {
       if (!alive) return;
       const dt = Math.min((perf - prevFrame) / 1000, .1); prevFrame = perf; const t = now(); ensureWorld();
       if (owned() && ['countdown', 'playing'].includes(state.phase) && t - state.updatedAt > STALE_MS) interrupted = 'Kết nối ván bị ngắt. Cả nhóm hãy sẵn sàng lại.';
-      if (owned() && connected && !document.hidden && !interrupted) {
+      if (owned() && !permissionBlocked && connected && !document.hidden && !interrupted) {
         if (state.phase === 'playing' && world && !world.over) {
           accumulator += dt;
           while (accumulator >= DT) {
@@ -176,7 +185,7 @@ export default {
         }
         if (world && ['countdown', 'playing', 'results', 'ended'].includes(state.phase) && t - lastFrameSend >= 100) void publishBoard();
       }
-      if (owned() && connected && !document.hidden && !hostWriting && state.phase !== 'closed') {
+      if (owned() && !permissionBlocked && connected && !document.hidden && !hostWriting && state.phase !== 'closed') {
         if (interrupted) void hostPatch({ phase: 'closed', reason: interrupted });
         else if (state.phase === 'countdown' && t >= state.startsAt) { accumulator = 0; void hostPatch({ phase: 'playing' }); }
         else if (state.phase === 'playing' && world?.over) { const patch = finishRound(state, world, summary(world, t)); if (patch) void hostPatch(patch); }
@@ -193,7 +202,7 @@ export default {
       if (!alive) return;
       const s = state, waiting = ['lobby', 'results', 'ended'].includes(s?.phase);
       const roster = s?.phase === 'lobby' || s?.phase === 'ended' ? present() : s?.players || [];
-      q('.snow-error').textContent = error; q('.snow-game').classList.toggle('reduced', reduced);
+      q('.snow-error').textContent = error; q('.snow-retry').hidden = !permissionBlocked; q('.snow-game').classList.toggle('reduced', reduced);
       q('.snow-players').innerHTML = roster.map((p, i) => {
         const r = readiness[p.uid], ready = r?.id === s.id && r.round === s.round && r.token === p.token;
         const colorIndex = s.players?.findIndex(v => v.uid === p.uid) ?? -1, color = colorIndex >= 0 ? colorIndex : i;
@@ -219,8 +228,9 @@ export default {
       let message = !loaded ? 'Đang vào ván…' : !connected ? 'Mất kết nối. Đang nối lại…' : !ok ? 'Đang kết nối lại ván…' : s?.phase === 'lobby' ? `Phòng ${room.code} · ${present().length}/6 người · Cùng bấm sẵn sàng` : s?.phase === 'results' ? 'Bấm sẵn sàng để vào vòng tiếp theo' : s?.phase === 'ended' ? 'Kết thúc trận · Cùng sẵn sàng để chơi lại' : '';
       if (joinedId === s?.id && !currentConnection()) message = 'Bạn đang mở game ở một cửa sổ khác. Hãy dùng cửa sổ đó.';
       if (playing && ok && !freshBoard()) message = 'Đang tải lại sàn tuyết…';
+      if (permissionBlocked) message = 'Không mở được ván do quyền truy cập';
       q('.snow-message').textContent = message;
-      const overlay = !ok ? 'Đang kết nối…' : s.phase === 'countdown' ? String(Math.min(3, Math.max(1, Math.ceil((s.startsAt - t) / 1000)))) : s.phase === 'lobby' ? present().length < 2 ? 'Chờ thêm bạn…' : 'Sẵn sàng lăn?' : s.phase === 'ended' ? '🏆' : '';
+      const overlay = permissionBlocked ? 'Chưa mở được ván' : !ok ? 'Đang kết nối…' : s.phase === 'countdown' ? String(Math.min(3, Math.max(1, Math.ceil((s.startsAt - t) / 1000)))) : s.phase === 'lobby' ? present().length < 2 ? 'Chờ thêm bạn…' : 'Sẵn sàng lăn?' : s.phase === 'ended' ? '🏆' : '';
       if (q('.snow-overlay').textContent !== overlay) q('.snow-overlay').textContent = overlay;
       const index = s?.players?.findIndex(p => p.uid === me.uid) ?? -1;
       q('.snow-controls').style.setProperty('--player', COLORS[Math.max(0, index)]); q('.snow-controls').classList.toggle('disabled', !canMove());
@@ -276,6 +286,10 @@ export default {
     el.onclick = e => {
       const button = e.target.closest('[data-a]'); if (!button || button.disabled) return;
       if (button.dataset.a === 'ready') void setReady();
+      else if (button.dataset.a === 'retry') {
+        permissionBlocked = false; loaded = false; error = ''; joinedId = '';
+        watchRoom(); render(); void maintainSession();
+      }
       else if (button.dataset.a === 'sound') { muted = !muted; button.textContent = muted ? '🔇' : '🔊'; button.setAttribute('aria-label', muted ? 'Bật âm thanh' : 'Tắt âm thanh'); sound(660); }
     };
     el.onchange = e => {
@@ -283,24 +297,30 @@ export default {
       if (e.target.dataset.setting === 'reduced') { reduced = e.target.checked; ctx.store.set('snow-reduced', reduced); }
       render();
     };
-    const stops = [
-      room.watch(PATH, receive, e => showError(`Không tải được ván. Cần áp dụng database.rules.json mới. ${e.message}`)),
-      room.watch(`${BASE}/peers`, v => { if (alive) { peers = v || {}; if (!currentConnection()) resetInput(); render(); } }, showError),
-      room.watch(`${BASE}/ready`, v => { if (alive) { readiness = v || {}; render(); void autoStart(); } }, showError),
-      room.watch(`${BASE}/inputs`, v => { if (alive) { packets = v || {}; if (owned() && state.players) inputs = ingest(inputs, packets, state.players, state.id, state.round, now()); } }, showError),
-      room.watch(`${BASE}/frame`, v => { if (alive) { if (v && (!state || v.id !== state.id || v.round !== state.round)) latestFrame = v; else acceptBoard(v); } }, showError),
-      room.connection?.(v => {
+    function watchRoom() {
+      stops.forEach(f => f()); const generation = ++watchEpoch;
+      const safe = fn => value => { if (alive && generation === watchEpoch) fn(value); };
+      const fail = safe(showError);
+      stops = [
+      room.watch(PATH, safe(receive), fail),
+      room.watch(`${BASE}/peers`, safe(v => { peers = v || {}; if (!currentConnection()) resetInput(); render(); }), fail),
+      room.watch(`${BASE}/ready`, safe(v => { readiness = v || {}; render(); void autoStart(); }), fail),
+      room.watch(`${BASE}/inputs`, safe(v => { packets = v || {}; if (owned() && state.players) inputs = ingest(inputs, packets, state.players, state.id, state.round, now()); }), fail),
+      room.watch(`${BASE}/frame`, safe(v => { if (v && (!state || v.id !== state.id || v.round !== state.round)) latestFrame = v; else acceptBoard(v); }), fail),
+      room.connection?.(safe(v => {
         if (!alive) return; const was = connected; connected = v;
         if (!v) { resetInput(); if (owned() && ['countdown', 'playing'].includes(state.phase)) interrupted = 'Kết nối ván bị ngắt. Cả nhóm hãy sẵn sàng lại.'; }
         else if (!was) { joinedId = ''; lastSend = 0; }
         render();
-      }) || (() => {})
-    ];
+      })) || (() => {})
+      ];
+    }
+    watchRoom();
     const sendTimer = setInterval(() => { void sendInput(); }, 60);
     const sessionTimer = setInterval(() => { void maintainSession(); void autoStart(); if (!state || ['lobby', 'results', 'ended', 'closed'].includes(state.phase) || !healthy()) render(); }, 500);
     addEventListener('keydown', onKey); addEventListener('keyup', onKey); addEventListener('blur', blur); document.addEventListener('visibilitychange', visibility);
     ctx.onLeave(() => {
-      const id = state?.id, leader = owned(); alive = false; resetInput(); stops.forEach(f => f());
+      const id = state?.id, leader = owned(); alive = false; watchEpoch++; resetInput(); stops.forEach(f => f());
       cancelAnimationFrame(raf); clearInterval(sendTimer); clearInterval(sessionTimer);
       removeEventListener('keydown', onKey); removeEventListener('keyup', onKey); removeEventListener('blur', blur); document.removeEventListener('visibilitychange', visibility);
       void wake?.release(); if (leader) void closeSession(id, 'Một người đã rời ván. Cả nhóm hãy sẵn sàng lại.');
