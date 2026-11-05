@@ -5,7 +5,12 @@ const ready = () => cfg.apiKey && !cfg.apiKey.startsWith('ĐIỀN');
 async function remote() {
   const [{ initializeApp }, { getAuth, signInAnonymously }, db] = await Promise.all([import('firebase/app'), import('firebase/auth'), import('firebase/database')]);
   const app = initializeApp(cfg), cred = await signInAnonymously(getAuth(app)), d = db.getDatabase(app), r = p => db.ref(d, p);
+  let offset = 0;
+  db.onValue(r('.info/serverTimeOffset'), s => { offset = Number(s.val()) || 0; });
   return { mode: 'firebase', uid: cred.user.uid,
+    now: () => Date.now() + offset,
+    connection: cb => db.onValue(r('.info/connected'), s => cb(s.val() === true)),
+    onDisconnect: async p => { const action = db.onDisconnect(r(p)); await action.remove(); return () => action.cancel(); },
     get: async p => (await db.get(r(p))).val(),
     set: (p, v) => db.set(r(p), v), update: (p, o) => db.update(r(p), o),
     transact: async (p, fn) => {
@@ -40,6 +45,9 @@ function local() {
     return navigator.locks ? navigator.locks.request('babii-local-db', run) : Promise.resolve().then(run);
   };
   return { mode: 'local', uid,
+    now: () => Date.now(),
+    connection: cb => { cb(true); return () => {}; },
+    onDisconnect: async () => () => {},
     get: async p => at(read(), p) ?? null,
     set: async (p, v) => write(t => put(t, p, v)),
     update: async (p, o) => write(t => { for (const k in o) put(t, p + '/' + k, o[k]); }),

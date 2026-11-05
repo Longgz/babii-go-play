@@ -12,7 +12,7 @@ import { renderHub } from './hub.js';
 import { mountAvatar } from './avatar-editor.js';
 import { names } from './core/players.js';
 import { store } from './core/store.js';
-import { session, init, ping, onChange } from './core/room.js';
+import { session, init, joinRoom, ping, onChange } from './core/room.js';
 import { mountRoomPanel } from './room-panel.js';
 
 const app = document.getElementById('app');
@@ -52,7 +52,14 @@ function route() {
 }
 addEventListener('hashchange', route);
 app.textContent = 'Đang kết nối…';
-init().catch(e => console.warn(e)).finally(route);
+init().then(async () => {
+  const url = new URL(location.href), code = url.searchParams.get('room');
+  if (code) {
+    try { await joinRoom(code); }
+    catch (e) { ctx.toast(`Không vào được phòng mời: ${e.message}`); }
+    finally { url.searchParams.delete('room'); history.replaceState(null, '', url); }
+  }
+}).catch(e => console.warn(e)).finally(route);
 
 // PWA: cài lên màn hình chính, mở lại được khi mạng chập chờn
 if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register(import.meta.env.BASE_URL + 'sw.js').catch(() => {});

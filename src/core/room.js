@@ -23,6 +23,9 @@ async function enter(code, create) {
   stop(); stop = b.on(base + '/members', m => { members = m || {}; emit(); });
   // room.watch/set/update dùng đường dẫn tương đối trong phòng, ví dụ 'g/caro'
   cur = { code, watch: (s, cb, onError) => b.on(`${base}/${s}`, cb, onError), get: s => b.get(`${base}/${s}`), transact: (s, fn) => b.transact(`${base}/${s}`, fn), set: (s, v) => b.set(`${base}/${s}`, v), update: o => b.update(base, o), players: () => order(members) };
+  cur.now = () => b.now();
+  cur.connection = cb => b.connection(cb);
+  cur.onDisconnect = s => b.onDisconnect(`${base}/${s}`);
   store.set('room', code); emit();
 }
 export async function init() {
@@ -34,6 +37,7 @@ const L = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 export const createRoom = () => enter(Array.from({ length: 6 }, () => L[Math.random() * L.length | 0]).join(''), true);
 export async function joinRoom(code) {
   code = code.trim().toUpperCase();
+  if (!/^[A-HJ-NP-Z2-9]{6}$/.test(code)) throw new Error('Mã phòng gồm 6 chữ cái và số.');
   if (!code || !(await b.get(`rooms/${code}/host`))) throw new Error('Không tìm thấy phòng');
   return enter(code);
 }
